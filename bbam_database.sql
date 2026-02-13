@@ -100,8 +100,25 @@ CREATE TABLE workout_reminders (
     recurrence_days JSONB,
     message TEXT,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
 );
+
+CREATE TABLE user_devices (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    -- Frontend tarafından üretilen rastgele UUID (f47ac10b-58cc-...)
+    -- Bu ID, AsyncStorage içinde saklanan ID'dir.
+    device_uuid VARCHAR(255) NOT NULL,
+    expo_token VARCHAR(255) NOT NULL,
+    os_type VARCHAR(50) CHECK (os_type IN ('ios', 'android')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_device UNIQUE (user_id, device_uuid)
+);
+CREATE INDEX idx_user_devices_user_id ON user_devices(user_id);
+CREATE INDEX idx_user_devices_device_id ON user_devices(device_uuid);
+CREATE INDEX idx_user_devices_token ON user_devices(expo_token);
 
 
 -- Users
