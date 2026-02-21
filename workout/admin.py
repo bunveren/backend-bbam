@@ -21,4 +21,4 @@ class WorkoutPlanAdmin(admin.ModelAdmin):
 
 @admin.register(WorkoutReminder)
 class WorkoutReminderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'plan', 'reminder_time', 'recurrence', 'is_active')
+    list_display = ('user', 'plan', 'reminder_time', 'recurrence', 'is_active', 'created_at', 'updated_at')

@@ -1,20 +1,11 @@
-class AIFeedbackEngine:
-    @staticmethod
-    def process_error_vector(error_vector):
-        if error_vector.get('something_angle') > 90:
-            return "error generating test"
-        return "form looks great............."
-    
-    @staticmethod
-    def generate_feedback(error_vector):
-        if error_vector.get('something_angle') > 90:
-            return "error generating test"
-        return "form looks great............."
+from django.db.models import Avg, F, Window
+from django.db.models.functions import Lead
+from .models import WorkoutSession, SessionSummary
 
 class PerformanceDataProcessor:
     @staticmethod
     def process_incoming_session(data):
-        return data
+        return data #burada sessionu belki özet geçeriz
 
 class PerformanceAnalyzer:
     @staticmethod
@@ -42,4 +33,20 @@ class PerformanceAnalyzer:
 
 class ProgressAnalyzer:
     @staticmethod
-    def get_user_trends(user_id): pass
+    def get_user_progress(user_id, period='week'):
+        return WorkoutSession.objects.filter(
+            user_id=user_id, 
+            status='completed'
+        ).values('session_date', 'overall_accuracy_score').order_by('session_date')
+
+    @staticmethod
+    def calculate_accuracy_delta(user_id):
+        sessions = WorkoutSession.objects.filter(
+            user_id=user_id, 
+            status='completed'
+        ).order_by('-session_date')[:2]
+        
+        if len(sessions) < 2:
+            return 0
+        
+        return sessions[0].overall_accuracy_score - sessions[1].overall_accuracy_score

@@ -24,3 +24,15 @@ class UserProfile(models.Model):
     class Meta:
         managed = False
         db_table = 'user_profiles'
+        
+class UserDevice(models.Model):
+    user = models.ForeignKey(AppUser, on_delete=models.CASCADE, related_name='devices')
+    device_uuid = models.CharField(max_length=255)
+    expo_token = models.CharField(max_length=255)
+    os_type = models.CharField(max_length=50, choices=[('ios', 'ios'), ('android', 'android')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_active = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'user_devices'
+        unique_together = ('user', 'device_uuid')

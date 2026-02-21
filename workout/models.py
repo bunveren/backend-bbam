@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class Exercise(models.Model):
     name = models.CharField(max_length=255)
@@ -36,6 +37,14 @@ class WorkoutPlan(models.Model):
 
     def __str__(self):
         return self.plan_name
+    
+    def delete(self, **kwargs):
+        self.deleted_at = timezone.now()
+        self.save()
+    
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
 
 
 class WorkoutPlanItem(models.Model):
@@ -50,6 +59,7 @@ class WorkoutPlanItem(models.Model):
         managed = False
         db_table = 'workout_plan_items'
         unique_together = (('plan', 'step_order'),)
+        indexes = [models.Index(fields=['plan', 'step_order'], name='idx_plan_items_plan_order'),]
 
 
 class WorkoutReminder(models.Model):
@@ -67,7 +77,7 @@ class WorkoutReminder(models.Model):
     message = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         managed = False
         db_table = 'workout_reminders'

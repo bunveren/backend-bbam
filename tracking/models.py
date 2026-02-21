@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 
 class WorkoutSession(models.Model):
     STATUS_CHOICES = [
@@ -7,8 +8,6 @@ class WorkoutSession(models.Model):
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
-
-    # 'users' ve 'workout' app'lerine referans veriyoruz
     user = models.ForeignKey('users.AppUser', on_delete=models.CASCADE)
     plan = models.ForeignKey('workout.WorkoutPlan', on_delete=models.SET_NULL, blank=True, null=True)
     
@@ -25,6 +24,7 @@ class WorkoutSession(models.Model):
     class Meta:
         managed = False
         db_table = 'workout_sessions'
+        indexes = [models.Index(fields=['user', '-session_date'], name='idx_sessions_user_date'),]
 
     def __str__(self):
         return f"{self.user} - {self.session_date} ({self.status})"
@@ -56,3 +56,4 @@ class SessionSummary(models.Model):
     class Meta:
         managed = False
         db_table = 'session_summaries'
+        indexes = [GinIndex(fields=['summary_json'], name='idx_summary_json'),]

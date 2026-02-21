@@ -22,4 +22,8 @@ urlpatterns = [
     path('api/workout/', include('workout.urls')), 
     path('api/tracking/', include('tracking.urls')),
     path('api/users/', include('users.urls')),
+    path('api/feedback/', include('feedback.urls')),
+    path('api/notifications/', include('notifications.urls'))
 ]
+#performans veri isleyici
+#backendde verinin soft delete edilmesi

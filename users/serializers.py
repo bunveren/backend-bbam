@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AppUser, UserProfile
+from .models import AppUser, UserProfile, UserDevice
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,3 +11,9 @@ class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUser
         fields = '__all__'
+
+class UserDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDevice
+        fields = ['id', 'device_uuid', 'expo_token', 'os_type', 'last_active']
+        read_only_fields = ['id', 'last_active']
