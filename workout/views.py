@@ -5,7 +5,8 @@ from .serializers import (
     ExerciseSerializer, ExerciseRuleSerializer, 
     WorkoutPlanSerializer, WorkoutReminderSerializer
 )
-from .services import ExerciseLibraryService, NotificationService
+from .services import ExerciseLibraryService
+from notifications.services import NotificationService
 
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
