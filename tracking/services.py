@@ -1,6 +1,5 @@
-from django.db.models import Avg, F, Window
-from django.db.models.functions import Lead
 from .models import WorkoutSession, SessionSummary
+from feedback.services import AIFeedbackEngine
 
 class PerformanceDataProcessor:
     @staticmethod
@@ -15,16 +14,22 @@ class PerformanceAnalyzer:
         return sum(e.accuracy_score for e in exercises) / len(exercises)
     
     @staticmethod
-    def generate_and_save_summary(session):
+    def generate_and_save_summary(session, common_errors):
+        if common_errors is None:
+            common_errors = []
         exercises = session.sessionexercise_set.all()
-        
+        total_accuracy = sum(ex.accuracy_score for ex in exercises if ex.accuracy_score)
+        avg_accuracy = total_accuracy / exercises.count() if exercises.exists() else 0
+
         summary_data = {
-            "overall_avg_score": float(session.overall_accuracy_score),
-            "total_completed_reps": sum(e.completed_reps or 0 for e in exercises),
-            "details": [
-                {"name": e.exercise.name, "score": float(e.accuracy_score)} for e in exercises
-            ]
+            "session_id": str(session.id),
+            "duration_minutes": session.duration_minutes,
+            "avg_form_accuracy": avg_accuracy,
+            "common_errors": common_errors
         }
+        
+        ai_comment = AIFeedbackEngine.generate_post_workout_analysis(summary_data)
+        summary_data["ai_summary"] = ai_comment
         
         SessionSummary.objects.update_or_create(
             session=session,

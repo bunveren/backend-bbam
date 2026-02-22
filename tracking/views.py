@@ -46,15 +46,20 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
                     'completed_reps': exercise_data.get('completed_reps'),
                     'completed_seconds': exercise_data.get('completed_seconds'),
                     'accuracy_score': exercise_data.get('accuracy_score')
+                    #'errors': exercise_data.get('errors', []) ?
                 }
             )
         
         session.status = 'completed'
+        session.ended_at = timezone.now()
+        if session.started_at:
+            delta = session.ended_at - session.started_at
+            session.duration_minutes = int(delta.total_seconds() / 60)
         session.save()
-        PerformanceAnalyzer.generate_and_save_summary(session)
-        
+        PerformanceAnalyzer.generate_and_save_summary(session, session_common_errors)
         return Response({
-            "status": "Performance data saved and summary generated."
+            "status": "Performance data saved and summary generated.",
+            "duration_minutes": session.duration_minutes
         }, status=status.HTTP_200_OK)
 
 class SessionExerciseViewSet(viewsets.ModelViewSet):
