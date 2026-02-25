@@ -22,6 +22,7 @@ class AppUser(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(AppUser, on_delete=models.CASCADE, primary_key=True)
+    user_name = models.CharField(max_length=255)
     height_cm = models.IntegerField(blank=True, null=True)
     weight_kg = models.IntegerField(blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)

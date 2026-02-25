@@ -8,6 +8,7 @@ CREATE TABLE users (
 
 CREATE TABLE user_profiles (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_name VARCHAR(255) NOT NULL,
     height_cm INTEGER,
     weight_kg INTEGER,
     age INTEGER,
@@ -74,7 +75,8 @@ CREATE TABLE session_exercises (
     completed_reps INTEGER,
     completed_seconds INTEGER,
     accuracy_score DECIMAL(5,2),
-    
+    common_errors JSONB,
+
     CONSTRAINT unique_session_step UNIQUE (session_id, step_order)
 );
 
@@ -186,18 +188,3 @@ BEFORE INSERT ON workout_sessions
 FOR EACH ROW
 WHEN (NEW.plan_id IS NOT NULL)
 EXECUTE FUNCTION copy_plan_name_to_session();
-
-"""
-CREATE OR REPLACE FUNCTION calculate_session_duration()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.ended_at IS NOT NULL AND NEW.started_at IS NOT NULL THEN
-        NEW.duration_minutes := EXTRACT(EPOCH FROM (NEW.ended_at - NEW.started_at)) / 60;
-    END IF;
-    RETURN NEW;
-END;
-
-CREATE TRIGGER trg_session_duration
-BEFORE INSERT OR UPDATE ON workout_sessions
-FOR EACH ROW EXECUTE FUNCTION calculate_session_duration();
-"""
