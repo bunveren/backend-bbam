@@ -56,18 +56,23 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
             defaults={
                 'accuracy_score': accuracy_score,
                 'completed_reps': completed_reps,
+                'completed_seconds': exercise_data.get('completed_seconds'),
                 'step_order': step_order,
                 'common_errors': common_errors
                 #'feedback_summary': feedback_summary
             }
         )
         
+        #todo melisin eklentilerinin baglandigi yer
+        #PerformanceAnalyzer.generate_and_save_summary(session, session_common_errors)
+
         return Response({
             "performance_id": session_exercise.id,
             "session_id": session.id,
             "exercise_id": exercise_id,
             "accuracy_score": accuracy_score,
             "completed_reps": completed_reps,
+            'completed_seconds': exercise_data.get('completed_seconds'),
             "message": "Performance data submitted successfully."
         }, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
 
