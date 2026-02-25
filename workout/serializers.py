@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlanItem, WorkoutReminder
+from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlanItem
 
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,8 +27,4 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkoutPlan
         fields = ['id', 'user', 'plan_name', 'items', 'created_at']
-
-class WorkoutReminderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkoutReminder
-        fields = '__all__'
+        read_only_fields = ['user']

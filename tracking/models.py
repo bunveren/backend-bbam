@@ -44,7 +44,7 @@ class SessionExercise(models.Model):
     common_errors = models.JSONField(blank=True, null=True)
     #feedback_summary = models.TextField(blank=True, null=True)
     class Meta:
-        managed = True
+        managed = False
         db_table = 'session_exercises'
         unique_together = (('session', 'step_order'),)
 
