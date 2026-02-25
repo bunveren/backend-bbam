@@ -200,17 +200,4 @@ END;
 CREATE TRIGGER trg_session_duration
 BEFORE INSERT OR UPDATE ON workout_sessions
 FOR EACH ROW EXECUTE FUNCTION calculate_session_duration();
-
-CREATE OR REPLACE FUNCTION copy_plan_name_to_session()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.plan_id IS NOT NULL THEN
-        SELECT plan_name INTO NEW.plan_name FROM workout_plans WHERE id = NEW.plan_id;
-    END IF;
-    RETURN NEW;
-END;
-
-CREATE TRIGGER trg_copy_plan_name
-BEFORE INSERT ON workout_sessions
-FOR EACH ROW EXECUTE FUNCTION copy_plan_name_to_session();
 """

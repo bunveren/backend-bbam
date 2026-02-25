@@ -26,7 +26,7 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = WorkoutPlan
-        fields = ['id', 'plan_name', 'items', 'created_at']
+        fields = ['id', 'user', 'plan_name', 'items', 'created_at']
 
 class WorkoutReminderSerializer(serializers.ModelSerializer):
     class Meta:

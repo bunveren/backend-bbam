@@ -15,6 +15,9 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
     serializer_class = WorkoutSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
     
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
     @action(detail=True, methods=['post'])
     def log_exercise(self, request, pk=None):
         session = self.get_object()

@@ -4,7 +4,14 @@ class AppUser(models.Model):
     email = models.CharField(unique=True, max_length=255)
     password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def is_authenticated(self):
+        return True
 
+    @property
+    def is_anonymous(self):
+        return False
+    
     class Meta:
         managed = False
         db_table = 'users'
