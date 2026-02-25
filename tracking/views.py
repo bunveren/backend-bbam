@@ -44,7 +44,7 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
         accuracy_score = request.data.get('accuracy_score')
         completed_reps = request.data.get('completed_reps')
         common_errors = request.data.get('common_errors', [])
-        feedback_summary = request.data.get('feedback_summary', '')
+        #feedback_summary = request.data.get('feedback_summary', '')
         step_order = request.data.get('step_order', 1) 
 
         if not exercise_id:
@@ -57,8 +57,8 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
                 'accuracy_score': accuracy_score,
                 'completed_reps': completed_reps,
                 'step_order': step_order,
-                'common_errors': common_errors,
-                'feedback_summary': feedback_summary
+                'common_errors': common_errors
+                #'feedback_summary': feedback_summary
             }
         )
         
