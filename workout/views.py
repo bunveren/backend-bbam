@@ -11,10 +11,11 @@ from notifications.services import NotificationService
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
-
+"""
 class WorkoutReminderViewSet(viewsets.ModelViewSet):
     queryset = WorkoutReminder.objects.all()
     serializer_class = WorkoutReminderSerializer
+"""
 
 class WorkoutController(viewsets.ModelViewSet):
     queryset = WorkoutPlan.objects.all()
@@ -43,10 +44,10 @@ class WorkoutPlanViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return WorkoutPlan.objects.filter(user=self.request.user, deleted_at__isnull=True)
+        return WorkoutPlan.objects.filter(created_by=self.request.user, deleted_at__isnull=True)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(created_by=self.request.user)
 
 class ReminderViewSet(viewsets.ModelViewSet):
     serializer_class = WorkoutReminderSerializer

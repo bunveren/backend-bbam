@@ -19,7 +19,7 @@ class PerformanceAnalyzer:
             common_errors = []
         exercises = session.sessionexercise_set.all()
         total_accuracy = sum(ex.accuracy_score for ex in exercises if ex.accuracy_score)
-        avg_accuracy = total_accuracy / exercises.count() if exercises.exists() else 0
+        avg_accuracy = float(total_accuracy / exercises.count()) if exercises.exists() else 0
 
         summary_data = {
             "session_id": str(session.id),
