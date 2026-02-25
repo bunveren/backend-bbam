@@ -15,3 +15,17 @@ class CustomJWTAuthentication(authentication.BaseAuthentication):
             return (user, token) 
         except (jwt.ExpiredSignatureError, jwt.DecodeError, AppUser.DoesNotExist):
             raise exceptions.AuthenticationFailed('Invalid or expired token')
+
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
+
+class CustomJWTScheme(OpenApiAuthenticationExtension):
+    target_class = CustomJWTAuthentication  # String değil, direkt yukarıdaki sınıfı atıyoruz
+    name = 'BearerAuth'
+    
+    def get_security_definition(self, auto_schema):
+        return {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
+            'description': 'Token değerinizi girin (Başına Bearer yazmanıza gerek yok).'
+        }
