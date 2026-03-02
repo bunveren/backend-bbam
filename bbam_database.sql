@@ -8,7 +8,7 @@ CREATE TABLE users (
 
 CREATE TABLE user_profiles (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    user_name VARCHAR(255) NOT NULL,
+    user_name VARCHAR(255),
     height_cm INTEGER,
     weight_kg INTEGER,
     age INTEGER,
