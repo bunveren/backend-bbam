@@ -34,7 +34,7 @@ class CustomJWTAuthentication(JWTAuthentication):
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 class CustomJWTScheme(OpenApiAuthenticationExtension):
-    target_class = CustomJWTAuthentication  # String değil, direkt yukarıdaki sınıfı atıyoruz
+    target_class = CustomJWTAuthentication
     name = 'BearerAuth'
     
     def get_security_definition(self, auto_schema):

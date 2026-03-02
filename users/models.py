@@ -22,7 +22,7 @@ class AppUser(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(AppUser, on_delete=models.CASCADE, primary_key=True)
-    user_name = models.CharField(max_length=255)
+    user_name = models.CharField(max_length=255, blank=True, null=True)
     height_cm = models.IntegerField(blank=True, null=True)
     weight_kg = models.IntegerField(blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)
@@ -30,7 +30,7 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'user_profiles'
         
 class UserDevice(models.Model):
