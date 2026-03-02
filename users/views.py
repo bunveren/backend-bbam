@@ -10,20 +10,24 @@ class UserController(viewsets.ModelViewSet):
     serializer_class = AppUserSerializer
 
     def create(self, request):
-        user = UserManager.register_user(request.data['email'], request.data['password'])
+        user = UserManager.register_user(request.data['email'], request.data['password']) 
         return Response({"user_id": user.id, "message": "user created successfully!!"}, status=status.HTTP_201_CREATED)
     
     @action(detail=False, methods=['post'])
     def login(self, request):
-        user = UserManager.validate_credentials(request.data['email'], request.data['password'])
+        user = UserManager.validate_credentials(request.data['email'], request.data['password'])  
         if user:
-            token = TokenService.generate_jwt(user)
-            return Response({"token": token, "user_id": user.id})
+            tokens = TokenService.generate_jwt(user) 
+            return Response({
+                "access": tokens['access'],
+                "refresh": tokens['refresh'],
+                "user_id": user.id
+            })
         return Response({"error": "Invalid credentials"}, status=401)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]   
 
     def get_queryset(self):
         return UserProfile.objects.filter(user=self.request.user)

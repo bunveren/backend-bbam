@@ -42,5 +42,6 @@ class UserDevice(models.Model):
     last_active = models.DateTimeField(auto_now=True)
     
     class Meta:
+        managed = False
         db_table = 'user_devices'
         unique_together = ('user', 'device_uuid')

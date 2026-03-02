@@ -10,7 +10,7 @@ class AppUserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
     class Meta:
         model = AppUser
-        fields = '__all__'
+        fields = ['id','email', 'created_at']
 
 class UserDeviceSerializer(serializers.ModelSerializer):
     class Meta:
