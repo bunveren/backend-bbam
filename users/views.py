@@ -48,8 +48,33 @@ class DeviceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return UserDevice.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def create(self, request, *args, **kwargs):
+        device_uuid = request.data.get('device_uuid')
+        expo_token = request.data.get('expo_token')
+        os_type = request.data.get('os_type')
+
+        if not device_uuid or not expo_token:
+            return Response(
+                {"error": "device_uuid and expo_token are mandatory."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        device, created = UserDevice.objects.update_or_create(
+            user=request.user,
+            device_uuid=device_uuid,
+            defaults={
+                'expo_token': expo_token,
+                'os_type': os_type,
+            }
+        )
+
+        serializer = self.get_serializer(device)
+        
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(serializer.data, status=status_code)
+
+    # def perform_create(self, serializer):
+    #     serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['delete'], url_path='unregister/(?P<uuid>[^/.]+)')
     def unregister(self, request, uuid=None):
