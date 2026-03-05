@@ -1,18 +1,37 @@
+import requests
+from django.conf import settings
+import logging
+from users.models import UserDevice 
+
+logger = logging.getLogger(__name__)
 class NotificationService:
     @staticmethod
-    def send_push_notification(user, title, message, extra_data=None):
-        """
-        TODO:
-        Expo Push API entegrasyonu burada yapılacak.
-        Kullanıcının veritabanındaki (UserDevice modelindeki) expo_token 
-        bilgisi çekilerek ilgili cihaza bildirim atılacak.
-        """
-        pass
+    def send_silent_sync_signal(user, sender_device_uuid):
+        devices = UserDevice.objects.filter(user=user).exclude(device_uuid=sender_device_uuid)
+        
+        if not devices.exists():
+            return
 
-    @staticmethod
-    def send_sync_signal(user):
-        """
-        TODO:
-        Mobil cihaza silent push atacak fonksiyon.
-        """
-        pass
+        tokens = [d.expo_token for d in devices]
+
+        payload = {
+            "to": tokens,
+            "data": {
+                "type": "REMINDER_SYNC",
+                "action": "REFRESH_REMINDERS"
+            },
+            "priority": "high",
+            "contentAvailable": True
+        }
+
+        try:
+            url = "https://exp.host/--/api/v2/push/send"
+            response = requests.post(url, json=payload, timeout=10)
+            
+            if response.status_code == 200:
+                logger.info(f"Sync signal was successfully send to {len(tokens)} devices.")
+            else:
+                logger.error(f"Expo API Error: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Connection Error: {str(e)}")
