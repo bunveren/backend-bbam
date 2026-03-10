@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlanItem, WorkoutReminder
+from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlanItem
 
 @admin.register(Exercise)
 class ExerciseAdmin(admin.ModelAdmin):
@@ -18,7 +18,3 @@ class WorkoutPlanItemInline(admin.TabularInline):
 class WorkoutPlanAdmin(admin.ModelAdmin):
     list_display = ('plan_name', 'user', 'created_at')
     inlines = [WorkoutPlanItemInline]
-
-@admin.register(WorkoutReminder)
-class WorkoutReminderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'plan', 'reminder_time', 'recurrence', 'is_active', 'created_at', 'updated_at')

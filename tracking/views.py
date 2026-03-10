@@ -9,12 +9,16 @@ from django.db.models import Avg, Count
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.views import APIView
+from tracking.services import PerformanceAnalyzer
 
 class WorkoutSessionViewSet(viewsets.ModelViewSet):
     queryset = WorkoutSession.objects.all()
     serializer_class = WorkoutSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
     
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
     @action(detail=True, methods=['post'])
     def log_exercise(self, request, pk=None):
         session = self.get_object()
@@ -32,11 +36,46 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
-    @action(detail=True, methods=['post'], url_path='performance')
-    def submit_performance(self, request, pk=None):
+    @action(detail=True, methods=['post', 'put'], url_path='performance')
+    def performance(self, request, pk=None):
+        session = self.get_object()
+        
+        exercise_id = request.data.get('exercise_id')
+        accuracy_score = request.data.get('accuracy_score')
+        completed_reps = request.data.get('completed_reps')
+        common_errors = request.data.get('common_errors', [])
+        step_order = request.data.get('step_order', 1) 
+
+        if not exercise_id:
+            return Response({"message": "exercise_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        session_exercise, created = SessionExercise.objects.update_or_create(
+            session=session,
+            exercise_id=exercise_id,
+            defaults={
+                'accuracy_score': accuracy_score,
+                'completed_reps': completed_reps,
+                'completed_seconds': request.data.get('completed_seconds'),
+                'step_order': step_order,
+                'common_errors': common_errors
+            }
+        )
+
+        return Response({
+            "performance_id": session_exercise.id,
+            "session_id": session.id,
+            "exercise_id": exercise_id,
+            "accuracy_score": accuracy_score,
+            "completed_reps": completed_reps,
+            'completed_seconds': request.data.get('completed_seconds'),
+            "message": "Performance data submitted successfully."
+        }, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='end')
+    def end(self, request, pk=None):
         session = self.get_object()
         performance_data = request.data.get('exercises', [])
-        
+        session_common_errors = []
         for exercise_data in performance_data:
             SessionExercise.objects.update_or_create(
                 session=session,
@@ -45,21 +84,30 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
                     'exercise_id': exercise_data.get('exercise_id'),
                     'completed_reps': exercise_data.get('completed_reps'),
                     'completed_seconds': exercise_data.get('completed_seconds'),
-                    'accuracy_score': exercise_data.get('accuracy_score')
-                    #'errors': exercise_data.get('errors', []) ?
+                    'accuracy_score': exercise_data.get('accuracy_score'),
+                    'common_errors': exercise_data.get('common_errors', [])
                 }
             )
-        
-        session.status = 'completed'
+            if exercise_data.get('common_errors'):
+                session_common_errors.extend(exercise_data.get('common_errors'))
+
         session.ended_at = timezone.now()
-        if session.started_at:
+        duration_input = request.data.get('duration_minutes')
+        
+        if duration_input is not None:
+            session.duration_minutes = duration_input
+        elif session.started_at:
             delta = session.ended_at - session.started_at
             session.duration_minutes = int(delta.total_seconds() / 60)
+        session.status = 'completed'
         session.save()
+        #mels metod
         PerformanceAnalyzer.generate_and_save_summary(session, session_common_errors)
         return Response({
-            "status": "Performance data saved and summary generated.",
-            "duration_minutes": session.duration_minutes
+            "status": session.status,
+            "session_id": session.id,
+            "duration_minutes": session.duration_minutes,
+            "message": "Workout session marked as completed and summary generated."
         }, status=status.HTTP_200_OK)
 
 class SessionExerciseViewSet(viewsets.ModelViewSet):
