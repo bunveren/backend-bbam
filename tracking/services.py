@@ -41,6 +41,8 @@ class PerformanceAnalyzer:
             session=session,
             defaults={"summary_json": summary_data}
         )
+        session.overall_accuracy_score = avg_accuracy
+        session.save(update_fields=['overall_accuracy_score'])
 
 class ProgressAnalyzer:
     @staticmethod

@@ -36,7 +36,7 @@ class WorkoutPlanViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return WorkoutPlan.objects.filter(created_by=self.request.user, deleted_at__isnull=True)
+        return WorkoutPlan.objects.filter(user=self.request.user, deleted_at__isnull=True)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

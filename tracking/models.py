@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.indexes import GinIndex
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class WorkoutSession(models.Model):
     STATUS_CHOICES = [
@@ -39,7 +40,7 @@ class SessionExercise(models.Model):
     
     completed_reps = models.IntegerField(blank=True, null=True)
     completed_seconds = models.IntegerField(blank=True, null=True)
-    accuracy_score = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    accuracy_score = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
     common_errors = models.JSONField(blank=True, null=True)
     feedback_summary = models.TextField(blank=True, null=True)
     class Meta:
