@@ -44,7 +44,6 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
         accuracy_score = request.data.get('accuracy_score')
         completed_reps = request.data.get('completed_reps')
         common_errors = request.data.get('common_errors', [])
-        #feedback_summary = request.data.get('feedback_summary', '')
         step_order = request.data.get('step_order', 1) 
 
         if not exercise_id:
@@ -59,12 +58,8 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
                 'completed_seconds': exercise_data.get('completed_seconds'),
                 'step_order': step_order,
                 'common_errors': common_errors
-                #'feedback_summary': feedback_summary
             }
         )
-        
-        #todo melisin eklentilerinin baglandigi yer
-        #PerformanceAnalyzer.generate_and_save_summary(session, session_common_errors)
 
         return Response({
             "performance_id": session_exercise.id,
@@ -79,26 +74,8 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='end')
     def end(self, request, pk=None):
         session = self.get_object()
-        duration_minutes = request.data.get('duration_minutes')
-
-        session.status = 'completed'
-        session.ended_at = timezone.now()
-        if duration_minutes is not None:
-            session.duration_minutes = duration_minutes
-        elif session.started_at:
-            delta = session.ended_at - session.started_at
-            session.duration_minutes = int(delta.total_seconds() / 60)
-        session.save()
-        
-        #request'ten common_errors gibi veriler çekilebilir
-        PerformanceAnalyzer.generate_and_save_summary(session, [])
-        return Response({
-            "session_id": session.id,
-            "message": "Workout session marked as completed."
-        }, status=status.HTTP_200_OK)
-        session = self.get_object()
         performance_data = request.data.get('exercises', [])
-        
+        session_common_errors = []
         for exercise_data in performance_data:
             SessionExercise.objects.update_or_create(
                 session=session,
@@ -107,21 +84,30 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
                     'exercise_id': exercise_data.get('exercise_id'),
                     'completed_reps': exercise_data.get('completed_reps'),
                     'completed_seconds': exercise_data.get('completed_seconds'),
-                    'accuracy_score': exercise_data.get('accuracy_score')
-                    #'errors': exercise_data.get('errors', []) ?
+                    'accuracy_score': exercise_data.get('accuracy_score'),
+                    'common_errors': exercise_data.get('common_errors', [])
                 }
             )
-        
-        session.status = 'completed'
+            if exercise_data.get('common_errors'):
+                session_common_errors.extend(exercise_data.get('common_errors'))
+
         session.ended_at = timezone.now()
-        if session.started_at:
+        duration_input = request.data.get('duration_minutes')
+        
+        if duration_input is not None:
+            session.duration_minutes = duration_input
+        elif session.started_at:
             delta = session.ended_at - session.started_at
             session.duration_minutes = int(delta.total_seconds() / 60)
+        session.status = 'completed'
         session.save()
+        #mels metod
         PerformanceAnalyzer.generate_and_save_summary(session, session_common_errors)
         return Response({
-            "status": "Performance data saved and summary generated.",
-            "duration_minutes": session.duration_minutes
+            "status": session.status,
+            "session_id": session.id,
+            "duration_minutes": session.duration_minutes,
+            "message": "Workout session marked as completed and summary generated."
         }, status=status.HTTP_200_OK)
 
 class SessionExerciseViewSet(viewsets.ModelViewSet):

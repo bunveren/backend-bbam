@@ -8,7 +8,6 @@ class Exercise(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'exercises'
 
     def __str__(self):
@@ -21,7 +20,6 @@ class ExerciseRule(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
         db_table = 'exercise_rules'
 
 
@@ -32,7 +30,6 @@ class WorkoutPlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'workout_plans'
 
     def __str__(self):
@@ -56,7 +53,6 @@ class WorkoutPlanItem(models.Model):
     set_label = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'workout_plan_items'
         unique_together = (('plan', 'step_order'),)
         indexes = [models.Index(fields=['plan', 'step_order'], name='idx_plan_items_plan_order')]

@@ -22,7 +22,6 @@ class WorkoutSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'workout_sessions'
         indexes = [models.Index(fields=['user', '-session_date'], name='idx_sessions_user_date'),]
 
@@ -44,7 +43,6 @@ class SessionExercise(models.Model):
     common_errors = models.JSONField(blank=True, null=True)
     #feedback_summary = models.TextField(blank=True, null=True)
     class Meta:
-        managed = False
         db_table = 'session_exercises'
         unique_together = (('session', 'step_order'),)
 
@@ -55,6 +53,5 @@ class SessionSummary(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'session_summaries'
         indexes = [GinIndex(fields=['summary_json'], name='idx_summary_json'),]
