@@ -41,7 +41,7 @@ class SessionExercise(models.Model):
     completed_seconds = models.IntegerField(blank=True, null=True)
     accuracy_score = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     common_errors = models.JSONField(blank=True, null=True)
-    #feedback_summary = models.TextField(blank=True, null=True)
+    feedback_summary = models.TextField(blank=True, null=True)
     class Meta:
         db_table = 'session_exercises'
         unique_together = (('session', 'step_order'),)

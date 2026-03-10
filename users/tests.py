@@ -6,6 +6,7 @@ from .models import AppUser, UserProfile
 from .services import UserManager
 from tracking.models import WorkoutSession
 from django.utils import timezone
+from django.urls import reverse
 
 class UserManagerTest(TestCase):
     def test_register_user_creates_profile(self):
@@ -27,6 +28,14 @@ class UserAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
         self.assertIn('refresh', response.data)
+        
+    def test_profile_update(self):
+        user = UserManager.register_user("profileuser", "password")
+        self.client.force_authenticate(user=user)
+        url = reverse('profiles-detail', kwargs={'pk': user.id})
+        data = {"height": 180, "weight": 75, "age": 25}
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         
 class SecurityTest(APITestCase):
     def test_access_other_user_session(self):
