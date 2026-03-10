@@ -18,5 +18,4 @@ class WorkoutReminder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
-        managed = False
         db_table = 'workout_reminders'

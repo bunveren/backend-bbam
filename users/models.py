@@ -13,7 +13,6 @@ class AppUser(models.Model):
         return False
     
     class Meta:
-        managed = False
         db_table = 'users'
         verbose_name = 'User'
 
@@ -30,7 +29,6 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = True
         db_table = 'user_profiles'
         
 class UserDevice(models.Model):
@@ -42,6 +40,5 @@ class UserDevice(models.Model):
     last_active = models.DateTimeField(auto_now=True)
     
     class Meta:
-        managed = False
         db_table = 'user_devices'
         unique_together = ('user', 'device_uuid')
