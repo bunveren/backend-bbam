@@ -4,7 +4,13 @@ from feedback.services import AIFeedbackEngine
 class PerformanceDataProcessor:
     @staticmethod
     def process_incoming_session(data):
-        return data #burada sessionu belki özet geçeriz
+        processed_data = {
+            "session_id": data.get("session_id"),
+            "exercises": len(data.get("exercises", [])),
+            "timestamp": data.get("ended_at"),
+            "is_valid": True if data.get("exercises") else False
+        }
+        return processed_data
 
 class PerformanceAnalyzer:
     @staticmethod
@@ -19,7 +25,7 @@ class PerformanceAnalyzer:
             common_errors = []
         exercises = session.sessionexercise_set.all()
         total_accuracy = sum(ex.accuracy_score for ex in exercises if ex.accuracy_score)
-        avg_accuracy = total_accuracy / exercises.count() if exercises.exists() else 0
+        avg_accuracy = float(total_accuracy / exercises.count()) if exercises.exists() else 0
 
         summary_data = {
             "session_id": str(session.id),
@@ -35,6 +41,8 @@ class PerformanceAnalyzer:
             session=session,
             defaults={"summary_json": summary_data}
         )
+        session.overall_accuracy_score = avg_accuracy
+        session.save(update_fields=['overall_accuracy_score'])
 
 class ProgressAnalyzer:
     @staticmethod

@@ -8,7 +8,6 @@ class Exercise(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'exercises'
 
     def __str__(self):
@@ -21,7 +20,6 @@ class ExerciseRule(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
         db_table = 'exercise_rules'
 
 
@@ -32,7 +30,6 @@ class WorkoutPlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = 'workout_plans'
 
     def __str__(self):
@@ -56,28 +53,6 @@ class WorkoutPlanItem(models.Model):
     set_label = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'workout_plan_items'
         unique_together = (('plan', 'step_order'),)
-        indexes = [models.Index(fields=['plan', 'step_order'], name='idx_plan_items_plan_order'),]
-
-
-class WorkoutReminder(models.Model):
-    RECURRENCE_CHOICES = [
-        ('once', 'Once'),
-        ('daily', 'Daily'),
-        ('weekly', 'Weekly'),
-    ]
-
-    user = models.ForeignKey('users.AppUser', on_delete=models.CASCADE)
-    plan = models.ForeignKey(WorkoutPlan, on_delete=models.CASCADE, blank=True, null=True)
-    reminder_time = models.TimeField()
-    recurrence = models.CharField(max_length=20, choices=RECURRENCE_CHOICES, default='once')
-    recurrence_days = models.JSONField(blank=True, null=True)
-    message = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    class Meta:
-        managed = False
-        db_table = 'workout_reminders'
+        indexes = [models.Index(fields=['plan', 'step_order'], name='idx_plan_items_plan_order')]

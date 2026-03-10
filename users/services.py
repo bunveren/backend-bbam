@@ -1,6 +1,6 @@
 from django.contrib.auth.hashers import make_password, check_password
 from .models import AppUser, UserProfile
-import jwt
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserManager:
     @staticmethod
@@ -20,5 +20,10 @@ class UserManager:
 class TokenService:
     @staticmethod
     def generate_jwt(user):
-        payload = {'user_id': user.id, 'email': user.email}
-        return jwt.encode(payload, 'SECRET_KEY', algorithm='HS256')
+        refresh = RefreshToken.for_user(user)
+        return {
+            'refresh': str(refresh),          
+            'access': str(refresh.access_token), 
+        }
+        #payload = {'user_id': user.id, 'email': user.email}
+        #return jwt.encode(payload, 'SECRET_KEY', algorithm='HS256')
