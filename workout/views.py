@@ -6,7 +6,8 @@ from .serializers import (
     WorkoutPlanSerializer
 )
 from .services import ExerciseLibraryService
-from notifications.services import NotificationService
+from rest_framework import status
+from rest_framework.decorators import action
 
 class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
@@ -19,8 +20,8 @@ class WorkoutController(viewsets.ModelViewSet):
         exercises = ExerciseLibraryService.get_all_exercises()
         return Response(exercises)
 
-    def create_workout_plan(self, request):
-        pass #todo ins mas
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class ExerciseLibraryViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
@@ -38,4 +39,4 @@ class WorkoutPlanViewSet(viewsets.ModelViewSet):
         return WorkoutPlan.objects.filter(created_by=self.request.user, deleted_at__isnull=True)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        serializer.save(user=self.request.user)

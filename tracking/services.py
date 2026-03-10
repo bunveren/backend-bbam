@@ -4,7 +4,13 @@ from feedback.services import AIFeedbackEngine
 class PerformanceDataProcessor:
     @staticmethod
     def process_incoming_session(data):
-        return data #burada sessionu belki özet geçeriz
+        processed_data = {
+            "session_id": data.get("session_id"),
+            "exercises": len(data.get("exercises", [])),
+            "timestamp": data.get("ended_at"),
+            "is_valid": True if data.get("exercises") else False
+        }
+        return processed_data
 
 class PerformanceAnalyzer:
     @staticmethod
