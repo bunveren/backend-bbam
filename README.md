@@ -1,28 +1,46 @@
-# backend-posest
+# Body and Beyond AI Mentor Backend
+BBAM kullanıcıların antrenmanlarını takip etmelerini, yapay zeka destekli form analizi ve geri bildirim almalarını sağlayan bir fitness takip platformunun backend servisidir. Django ve Django REST Framework kullanılarak geliştirilmiştir.
 
-db kurulumu: postgresql içerisinde default servera giriş yapın ve içine bbam_db adında database oluşturun. sırayla bbam_database.sql ve mock_data.sql i query sekmesinden open file ile açıp f5 ile çalıştırın. db bilgilerini settings.py'a girdiğinizden emin olun.
+## Özellikler
+* **Kullanıcı Yönetimi:** JWT tabanlı kimlik doğrulama, profil yönetimi ve cihaz senkronizasyonu.
+* **Antrenman Planlama:** Özelleştirilebilir egzersiz kütüphanesi ve antrenman planları.
+* **Performans Takibi:** Antrenman oturumlarının gerçek zamanlı loglanması, accuracy skorları ve streak hesaplama.
+* **Yapay Zeka Geri Bildirimleri:** Antrenman sonrasında performans verilerini analiz eden LLM entegrasyonu (umarım).
+* **Hatırlatıcılar ve Bildirimler:** Özelleştirilebilir antrenman hatırlatıcıları ve Expo üzerinden push notification desteği.
 
-python manage.py inspectdb > models.py yapılmış halini commitledim, db değişikliğinde generate edilmeli ve models.py'lar değiştirilmelidir.
-python manage.py migrate --fake-initial yaptım ki olanı güncellesin eskiye ekleme yapmaya çalışmasın
+## Tech Stack
+- **Framework:** Django 5.2.x & Django REST Framework
+- **Veritabanı:** PostgreSQL
+- **Geliştirici Araçları:** Django Extensions (Graph models, Shell plus)
+- **Kimlik Doğrulama:** Simple JWT (OAuth2 uyumlu)
+- **Dokümantasyon:** drf-spectacular (Swagger UI / OpenAPI 3.0)
+- **Test:** Model Bakery
 
-genel build alımı VENV ICINDE:
-python manage.py makemigrations  
+## Başlangıç
+Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin:
+ 1. Depoyu clonelayın
+ 2. Sanal ortam oluşturun ve aktif edin
+ 3. Bağımlılıkları yükleyin: `pip install -r requirements.txt`
+ 4. Veritabanı ayarları: Yerel PostgreSQL veritabanınızda `bbam_db` adında bir veritabanı oluşturun. `core_project/settings.py` dosyasındaki `DATABASES` ayarlarını kendi yerel kullanıcı adınız ve şifrenizle güncelleyin.
+### 5. Migrasyonları çalıştırın & sunucuyu başlatın
+```
+python manage.py makemigrations
 python manage.py migrate
-opsiyonel: python manage.py shell  ile dbnin baglandıgı kontrol edilebilir
-python manage.py createsuperuser ile admin üyeliği oluşturulur
 python manage.py runserver
-http://127.0.0.1:8000/admin e gidilip superuser bilgileri girilir ve dbnin geldiği kontrol edilebilir
+```
 
-settings.py içindeki db syntaxı:
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    }
-}
+## API Dokümantasyonu
+Sunucu çalıştıktan sonra API uç noktalarını ve kullanım detaylarını Swagger üzerinden görebilirsiniz: `http://127.0.0.1:8000/api/docs/` 
 
-todo: model isimlendirmelerini değiştireceğim
+## Testleri Çalıştırma
+Projedeki testleri koşturmak için:
+```
+python manage.py test
+```
+
+## Katkıda Bulunma
+1. Bu projeyi fork'layın.
+2. Yeni bir feature branch oluşturun.
+3. Değişikliklerinizi commit edin ve dala pushlayın.
+4. Pull Request açın.
+**Not:** Proje üzerinde çalışırken `X-Device-UUID` gibi özel header bilgilerinin bildirim servisleri için gerekli olduğunu unutmayın.
