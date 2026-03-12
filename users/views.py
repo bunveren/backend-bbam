@@ -10,12 +10,35 @@ class UserController(viewsets.ModelViewSet):
     serializer_class = AppUserSerializer
 
     def create(self, request):
-        user = UserManager.register_user(request.data['email'], request.data['password']) 
-        return Response({"user_id": user.id, "message": "user created successfully!!"}, status=status.HTTP_201_CREATED)
+        email = request.data.get('email')
+        password = request.data.get('password')
+        if not email or not password:
+            return Response(
+                {"error": "Email and password are required."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if AppUser.objects.filter(email=email).exists():
+            return Response(
+                {"error": "A user with this email already exists."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = UserManager.register_user(email, password) 
+        return Response({"user_id": user.id, "message": "User created successfully!"}, status=status.HTTP_201_CREATED)
     
     @action(detail=False, methods=['post'])
     def login(self, request):
-        user = UserManager.validate_credentials(request.data['email'], request.data['password'])  
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response(
+                {"error": "Email and password cannot be empty."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = UserManager.validate_credentials(email, password)  
         if user:
             tokens = TokenService.generate_jwt(user) 
             return Response({
@@ -23,7 +46,7 @@ class UserController(viewsets.ModelViewSet):
                 "refresh": tokens['refresh'],
                 "user_id": user.id
             })
-        return Response({"error": "Invalid credentials"}, status=401)
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
