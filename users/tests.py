@@ -80,19 +80,7 @@ class UserLoginAPITest(APITestCase):
     def test_user_login_empty_values(self):
         data = {"email": "", "password": ""}
         response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    # def test_profile_update(self):  # PATCH	/api/users/profiles/{id}/
-    #     user = UserManager.register_user("profileuser", "password")
-    #     self.client.force_authenticate(user=user)
-    #     url = reverse('profiles-detail', kwargs={'pk': user.id})
-    #     data = {"user_name": "John" ,"height_cm": 180, "weight_kg": 75, "age": 25}
-    #     response = self.client.patch(url, data)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(response.data['user_name'], "John")
-    #     self.assertEqual(response.data['height_cm'], 180)
-    #     self.assertEqual(response.data['weight_kg'], 75)
-    #     self.assertEqual(response.data['age'], 25)    
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)   
 
 class UsersProfilesAPITest(APITestCase):
     def setUp(self):
@@ -186,6 +174,11 @@ class SingleUserProfileAPITest(APITestCase):
         response= self.client.put(self.url_2,payload)
         #print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['user_name'], "Rick")
+        self.assertEqual(response.data['height_cm'], 174)
+        self.assertEqual(response.data['weight_kg'], 78)
+        self.assertEqual(response.data['age'], 20)   
+        self.assertEqual(response.data['gender'], 'male') 
 
     def test_admin_can_access_any_profile(self):
         self.client.force_authenticate(user=self.admin)
@@ -224,9 +217,24 @@ class SingleUserProfileAPITest(APITestCase):
         payload = {"user_name": "Bella" , 'height_cm': 174,'gender': 'female'}
         response = self.client.patch(self.url_1,payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['user_name'], "Bella")
+        self.assertEqual(response.data['height_cm'], 174)  
+        self.assertEqual(response.data['gender'], 'female')
 
     def test_admin_can_delete_any_profile(self):
         self.client.force_authenticate(user=self.admin)
         response = self.client.delete(self.url_1)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+# class UserDevicesAPITest (APITestCase):
+
+# class SecurityTest(APITestCase):
+#     def test_access_other_user_session(self):
+#         user1 = AppUser.objects.create(email="user1@gmail.com")
+#         user2 = AppUser.objects.create(email="user2@gmail.com")
+#         session_u1 = WorkoutSession.objects.create(user=user1, session_date="2026-01-01", started_at=timezone.now())
+        
+#         self.client.force_authenticate(user=user2)
+#         url = f"/api/tracking/sessions/{session_u1.id}/"
+#         response = self.client.get(url)
+#         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
