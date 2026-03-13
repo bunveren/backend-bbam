@@ -110,6 +110,45 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
             "message": "Workout session marked as completed and summary generated."
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'], url_path='sync')
+    def sync_offline_data(self, request):
+        data = request.data
+        session = WorkoutSession.objects.create(
+            user=self.request.user,
+            session_date=data.get('session_date'),
+            started_at=data.get('started_at'),
+            ended_at=data.get('ended_at'),
+            duration_minutes=data.get('duration_minutes'),
+            overall_accuracy_score=data.get('overall_accuracy'),
+            status='completed'
+        )
+
+        exercises = data.get('exercises', [])
+        session_exercises = []
+        all_errors = []
+
+        for ex in exercises:
+            session_exercises.append(SessionExercise(
+                session=session,
+                exercise_id=ex.get('exercise_id'),
+                completed_reps=ex.get('completed_reps'),
+                accuracy_score=ex.get('accuracy_score'),
+                common_errors=ex.get('common_errors', []),
+                step_order=ex.get('step_order')
+            ))
+            if ex.get('common_errors'):
+                all_errors.extend(ex.get('common_errors'))
+
+        SessionExercise.objects.bulk_create(session_exercises)
+
+        PerformanceAnalyzer.generate_and_save_summary(session, all_errors)
+
+        return Response({
+            "status": "synced",
+            "server_session_id": session.id,
+            "message": "Offline data successfully synchronized."
+        }, status=status.HTTP_201_CREATED)
+
 class SessionExerciseViewSet(viewsets.ModelViewSet):
     queryset = SessionExercise.objects.all()
     serializer_class = SessionExerciseSerializer
