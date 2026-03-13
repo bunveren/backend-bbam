@@ -253,3 +253,30 @@ class TrackingModuleTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('daily_stats', response.data)
         self.assertIn('streak_days', response.data['overall'])
+        
+    def test_it_38_manage_session_exercises(self):
+        """[IT-38] Manage Session Exercises: GET, POST, PATCH, DELETE /api/tracking/exercises/ """
+        url = '/api/tracking/exercises/'
+        post_data = {
+            "session": self.session.id,
+            "exercise": self.exercise.id,
+            "completed_reps": 15,
+            "accuracy_score": 95.0,
+            "step_order": 1
+        }
+        response = self.client.post(url, post_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        exercise_instance_id = response.data['id']
+        detail_url = f'{url}{exercise_instance_id}/'
+
+        get_response = self.client.get(url)
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+
+        patch_data = {"completed_reps": 20}
+        patch_response = self.client.patch(detail_url, patch_data, format='json')
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(patch_response.data['completed_reps'], 20)
+
+        delete_response = self.client.delete(detail_url)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
