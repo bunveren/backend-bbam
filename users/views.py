@@ -75,9 +75,15 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ModelViewSet):
     serializer_class = UserDeviceSerializer
     permission_classes = [permissions.IsAuthenticated]
-
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
     def get_queryset(self):
-        return UserDevice.objects.filter(user=self.request.user)
+        user = self.request.user
+        if user.is_staff:
+            return UserDevice.objects.all()
+        return UserDevice.objects.filter(user=user)
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         device_uuid = request.data.get('device_uuid')
@@ -90,6 +96,10 @@ class DeviceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        exists = UserDevice.objects.filter(user=request.user, device_uuid=device_uuid).exists()
+        if not exists and UserDevice.objects.filter(user=request.user).count() >= 3:
+            return Response({"error": "Device limit reached (Max 3)."}, status=status.HTTP_400_BAD_REQUEST)
+
         device, created = UserDevice.objects.update_or_create(
             user=request.user,
             device_uuid=device_uuid,
@@ -100,16 +110,17 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
         serializer = self.get_serializer(device)
-        
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         return Response(serializer.data, status=status_code)
 
-    # def perform_create(self, serializer):
-    #     serializer.save(user=self.request.user)
-
     @action(detail=False, methods=['delete'], url_path='unregister/(?P<uuid>[^/.]+)')
     def unregister(self, request, uuid=None):
-        deleted_count, _ = UserDevice.objects.filter(user=request.user, device_uuid=uuid).delete()
+        deleted_count, _ = self.get_queryset().filter(device_uuid=uuid).delete()
         if deleted_count > 0:
             return Response({"message": "Device unregistered"}, status=status.HTTP_204_NO_CONTENT)
         return Response({"error": "Device not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    #SİLMEYİN İLERDE KULLANILABİLİR
+    def destroy(self, request, *args, **kwargs):
+    #     return super().destroy(request, *args, **kwargs)
+        return Response({"detail": "Remote logout by ID is disabled for now. Use /unregister/{uuid}/"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
