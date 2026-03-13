@@ -298,7 +298,7 @@ class UserDevicesAPITest (APITestCase):
     def test_put_patch_not_allowed(self):
         self.client.force_authenticate(user=self.user1)
         url_detail = f"{self.url}{self.device1.id}/"
-        response = self.client.patch(url_detail, {"os_type": "windows"})
+        response = self.client.patch(url_detail, {"os_type": "ios"})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_unregister_device_success(self):
