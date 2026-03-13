@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from .models import AppUser, UserProfile, UserDevice
 from .serializers import AppUserSerializer, UserProfileSerializer, UserDeviceSerializer
 from .services import UserManager, TokenService
-
 class UserController(viewsets.ModelViewSet):
     queryset = AppUser.objects.all()
     serializer_class = AppUserSerializer
@@ -51,18 +50,27 @@ class UserController(viewsets.ModelViewSet):
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]   
-
+    http_method_names = ['get', 'put', 'patch', 'delete', 'head', 'options']
     def get_queryset(self):
-        return UserProfile.objects.filter(user=self.request.user)
+        user = self.request.user
+        if user.is_staff:
+            return UserProfile.objects.all()
+        return UserProfile.objects.filter(user=user)
 
-    def get_object(self):
-        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
+    # def get_object(self):
+    #     profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+    #     return profile
 
     def list(self, request, *args, **kwargs):
-        profile = self.get_object()
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data)
+        if request.user.is_staff:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        
+        return Response({"detail": "You do not have permission for this operation."}, status=status.HTTP_403_FORBIDDEN)
+        # profile = self.get_object()
+        # serializer = self.get_serializer(profile)
+        # return Response(serializer.data)
    
 class DeviceViewSet(viewsets.ModelViewSet):
     serializer_class = UserDeviceSerializer

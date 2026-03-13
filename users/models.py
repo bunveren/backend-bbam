@@ -5,6 +5,7 @@ class AppUser(models.Model):
     email = models.CharField(unique=True, max_length=255)
     password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_staff = models.BooleanField(default=False)
     @property
     def is_authenticated(self):
         return True
