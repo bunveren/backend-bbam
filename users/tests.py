@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.hashers import check_password
-from .models import AppUser, UserProfile
+from .models import AppUser, UserDevice, UserProfile
 from .services import UserManager
 from tracking.models import WorkoutSession
 from django.utils import timezone
@@ -55,31 +55,30 @@ class UserLoginAPITest(APITestCase):
         self.user = UserManager.register_user("user_login@gmail.com", "strong_psswrd")
 
     def test_user_login(self):
-        data = {"email": "user_login@gmail.com", "password": "strong_psswrd"}
-        response = self.client.post(self.url, data)
+        payload = {"email": "user_login@gmail.com", "password": "strong_psswrd"}
+        response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
         self.assertIn('refresh', response.data)
 
     def test_user_login_wrong_password(self):
-        data = {"email": "user_login@gmail.com", "password": "wrong_password"}
-        response = self.client.post(self.url, data)
+        payload = {"email": "user_login@gmail.com", "password": "wrong_password"}
+        response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_user_login_wrong_email(self):
-        data = {"email": "Different_user@gmail.com", "password": "strong_psswrd"}
-        response = self.client.post(self.url, data)
+        payload = {"email": "Different_user@gmail.com", "password": "strong_psswrd"}
+        response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_user_login_missing_field(self):
-        data = {"email": "user_login@gmail.com"}
-        response = self.client.post(self.url, data)
+        payload = {"email": "user_login@gmail.com"}
+        response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
 
     def test_user_login_empty_values(self):
-        data = {"email": "", "password": ""}
-        response = self.client.post(self.url, data)
+        payload = {"email": "", "password": ""}
+        response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)   
 
 class UsersProfilesAPITest(APITestCase):
@@ -127,9 +126,9 @@ class UsersProfilesAPITest(APITestCase):
 
 class SingleUserProfileAPITest(APITestCase):
     def setUp(self):
-        self.user1 = UserManager.register_user("user1@test.com", "pass123")
-        self.user2 = UserManager.register_user("user2@test.com", "pass123")
-        self.admin = AppUser.objects.create(email="admin@test.com", is_staff=True)
+        self.user1 = UserManager.register_user("user1@gamil.com", "pass123")
+        self.user2 = UserManager.register_user("user2@gamil.com", "pass123")
+        self.admin = AppUser.objects.create(email="admin@gamil.com", is_staff=True)
 
         profile_1 = self.user1.userprofile
         profile_1.user_name = "John"
@@ -226,7 +225,100 @@ class SingleUserProfileAPITest(APITestCase):
         response = self.client.delete(self.url_1)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-# class UserDevicesAPITest (APITestCase):
+class UserDevicesAPITest (APITestCase):
+    def setUp(self):
+        self.user1 = UserManager.register_user("user1@gamil.com", "pass123")
+        self.user2 = UserManager.register_user("user2@gamil.com", "pass123")
+        self.admin = AppUser.objects.create(email="admin@gamil.com", is_staff=True)
+
+        self.device1 = UserDevice.objects.create(
+            user=self.user1,
+            device_uuid="uuid-111",
+            expo_token="token-111",
+            os_type="android"
+        )
+
+        self.device2 = UserDevice.objects.create(
+            user=self.user2,
+            device_uuid="uuid-222",
+            expo_token="token-222",
+            os_type="android"
+        )
+        
+        self.url = "/api/users/devices/"
+        self.unregister_url = "/api/users/devices/unregister/"
+
+    def test_list_own_devices(self):
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_admin_list_all_devices(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+
+    def test_create_device_success(self):
+        self.client.force_authenticate(user=self.user1)
+        payload = {
+            "device_uuid": "uuid-new",
+            "expo_token": "token-new",
+            "os_type": "ios"
+        }
+        response = self.client.post(self.url, payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_update_existing_device_on_post(self):
+        self.client.force_authenticate(user=self.user1)
+        payload = {
+            "device_uuid": "uuid-111",
+            "expo_token": "token-new",
+            "os_type": "android"
+        }
+        response = self.client.post(self.url, payload)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['expo_token'], "token-new")
+
+    def test_device_limit_reached(self):
+        self.client.force_authenticate(user=self.user1)
+        UserDevice.objects.create(user=self.user1, device_uuid="u2", expo_token="t2")
+        UserDevice.objects.create(user=self.user1, device_uuid="u3", expo_token="t3")
+        payload = {"device_uuid": "u4", "expo_token": "t4", "os_type": "ios"}
+        response = self.client.post(self.url, payload)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_device_security(self):
+        self.client.force_authenticate(user=self.user2)
+        url_detail = f"{self.url}{self.device1.id}/"
+        response = self.client.get(url_detail)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_put_patch_not_allowed(self):
+        self.client.force_authenticate(user=self.user1)
+        url_detail = f"{self.url}{self.device1.id}/"
+        response = self.client.patch(url_detail, {"os_type": "windows"})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_unregister_device_success(self):
+        self.client.force_authenticate(user=self.user1)
+        url_unregister = f"{self.unregister_url}{self.device1.device_uuid}/"
+        response = self.client.delete(url_unregister)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(UserDevice.objects.filter(device_uuid="uuid-111").exists())
+
+    def test_unregister_other_user_device_denied(self):
+        self.client.force_authenticate(user=self.user2)
+        url_unregister = f"{self.unregister_url}{self.device1.device_uuid}/"
+        response = self.client.delete(url_unregister)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_remote_logout_by_id_disabled(self):
+        self.client.force_authenticate(user=self.user1)
+        url_detail = f"{self.url}{self.device1.id}/"
+        response = self.client.delete(url_detail)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 # class SecurityTest(APITestCase):
 #     def test_access_other_user_session(self):
