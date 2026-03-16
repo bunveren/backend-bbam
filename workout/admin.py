@@ -18,3 +18,5 @@ class WorkoutPlanItemInline(admin.TabularInline):
 class WorkoutPlanAdmin(admin.ModelAdmin):
     list_display = ('plan_name', 'user', 'created_at')
     inlines = [WorkoutPlanItemInline]
+    search_fields = ('user__email', 'plan_name')
+    list_filter = ('user',)
