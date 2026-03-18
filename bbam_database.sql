@@ -82,7 +82,7 @@ CREATE TABLE session_exercises (
 );
 
 CREATE TABLE exercise_rules (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY, 
     exercise_id INTEGER NOT NULL UNIQUE REFERENCES exercises(id) ON DELETE CASCADE,
     rules_json JSONB NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
