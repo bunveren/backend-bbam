@@ -1,3 +1,26 @@
+"""
+-- ESKI EGZERSIZLER DBNIZDE VARSA BUNU SQL SCRIPTINDEN SONRA CALISTIRIN TEK SEFERLIK
+BEGIN;
+
+
+UPDATE workout_plan_items SET exercise_id = 9 WHERE exercise_id = 1;   -- Squat
+UPDATE workout_plan_items SET exercise_id = 10 WHERE exercise_id = 2;  -- Push-up
+UPDATE workout_plan_items SET exercise_id = 11 WHERE exercise_id = 3;  -- Plank
+UPDATE workout_plan_items SET exercise_id = 13 WHERE exercise_id = 4;  -- Lunge
+UPDATE workout_plan_items SET exercise_id = 16 WHERE exercise_id = 5;  -- Glute Bridge -> Glute-Bridge
+UPDATE workout_plan_items SET exercise_id = 14 WHERE exercise_id = 6;  -- Jumping Jack -> Jumping-Jack
+
+UPDATE session_exercises SET exercise_id = 9 WHERE exercise_id = 1;
+UPDATE session_exercises SET exercise_id = 10 WHERE exercise_id = 2;
+UPDATE session_exercises SET exercise_id = 11 WHERE exercise_id = 3;
+UPDATE session_exercises SET exercise_id = 13 WHERE exercise_id = 4;
+UPDATE session_exercises SET exercise_id = 16 WHERE exercise_id = 5;
+UPDATE session_exercises SET exercise_id = 14 WHERE exercise_id = 6;
+
+DELETE FROM exercises WHERE id IN (1, 2, 3, 4, 5, 6);
+
+COMMIT;
+"""
 import json
 import os
 
@@ -11,28 +34,38 @@ def generate_sql(json_path, output_path="insert_exercises.sql"):
 
     with open(json_path, 'r', encoding='utf-8') as f: data = json.load(f)
     sql_statements = ["BEGIN;\n"]
-    if isinstance(data, dict):
-        items_to_process = data.items()
-    else:
-        items_to_process = [(item.get('name', 'Adsız'), item) for item in data]
+    items_to_process = data.items() if isinstance(data, dict) else [(item.get('name', 'noname'), item) for item in data]
 
     for name_key, details in items_to_process:
         name = escape_sql(name_key)
-        description = escape_sql(details.get('description', ''))
+        description = escape_sql(details.get('description', 'No description provided.'))
         gif_url = escape_sql(details.get('gif_url', ''))
-        
-        rules_dict = details.get('rules', {})
-        rules_json_str = json.dumps(rules_dict, ensure_ascii=False)
-        rules_json_escaped = escape_sql(rules_json_str)
+        formatted_json = json.dumps(details, indent=2, ensure_ascii=False)
+        full_config_escaped = escape_sql(formatted_json)
 
         stmt = f"""
-WITH inserted_exercise AS (
-    INSERT INTO exercises (name, description, gif_url)
-    VALUES ('{name}', '{description}', '{gif_url}')
-    RETURNING id
-)
-INSERT INTO exercise_rules (exercise_id, rules_json, is_active)
-SELECT id, '{rules_json_escaped}'::jsonb, TRUE FROM inserted_exercise;
+DO $$
+DECLARE
+    ex_id integer;
+BEGIN
+    UPDATE exercises 
+    SET description = '{description}', 
+        gif_url = '{gif_url}' 
+    WHERE name = '{name}';
+    
+    UPDATE exercise_rules 
+    SET rules_json = '{full_config_escaped}'::jsonb 
+    WHERE exercise_id IN (SELECT id FROM exercises WHERE name = '{name}');
+
+    IF NOT EXISTS (SELECT 1 FROM exercises WHERE name = '{name}') THEN
+        INSERT INTO exercises (name, description, gif_url) 
+        VALUES ('{name}', '{description}', '{gif_url}') 
+        RETURNING id INTO ex_id;
+        
+        INSERT INTO exercise_rules (exercise_id, rules_json, is_active) 
+        VALUES (ex_id, '{full_config_escaped}'::jsonb, TRUE);
+    END IF;
+END $$;
 """
         sql_statements.append(stmt)
 
