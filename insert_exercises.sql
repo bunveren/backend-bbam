@@ -812,13 +812,14 @@ DECLARE
     ex_id integer;
 BEGIN
     UPDATE exercises 
-    SET description = 'No description provided.', 
+    SET description = 'Maintain a sided straight line to build core stability.', 
         gif_url = '' 
     WHERE name = 'Side-Plank';
     
     UPDATE exercise_rules 
     SET rules_json = '{
   "mode": "hold",
+  "description": "Maintain a sided straight line to build core stability.",
   "holdConfig": {
     "primaryJoints": [
       12,
@@ -845,12 +846,13 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM exercises WHERE name = 'Side-Plank') THEN
         INSERT INTO exercises (name, description, gif_url) 
-        VALUES ('Side-Plank', 'No description provided.', '') 
+        VALUES ('Side-Plank', 'Maintain a sided straight line to build core stability.', '') 
         RETURNING id INTO ex_id;
         
         INSERT INTO exercise_rules (exercise_id, rules_json, is_active) 
         VALUES (ex_id, '{
   "mode": "hold",
+  "description": "Maintain a sided straight line to build core stability.",
   "holdConfig": {
     "primaryJoints": [
       12,
@@ -870,6 +872,162 @@ BEGIN
       "minAngle": 170,
       "maxAngle": 190,
       "message": "Keep your hips high! Your body should be a straight diagonal."
+    }
+  ]
+}'::jsonb, TRUE);
+    END IF;
+END $$;
+
+DO $$
+DECLARE
+    ex_id integer;
+BEGIN
+    UPDATE exercises 
+    SET description = 'Lie on your back with knees bent, then lift your torso toward your knees while keeping your core engaged.', 
+        gif_url = '' 
+    WHERE name = 'Sit-up';
+    
+    UPDATE exercise_rules 
+    SET rules_json = '{
+  "mode": "reps",
+  "description": "Lie on your back with knees bent, then lift your torso toward your knees while keeping your core engaged.",
+  "repConfig": {
+    "primaryJoints": [
+      12,
+      24,
+      26
+    ],
+    "startThreshold": 150,
+    "midThreshold": 45,
+    "type": "descending"
+  },
+  "rules": [
+    {
+      "id": "SU-01",
+      "name": "Torso Range",
+      "joints": [
+        12,
+        24,
+        26
+      ],
+      "minAngle": 40,
+      "maxAngle": 160,
+      "errorCondition": "angle < 40",
+      "message": "Don''t over-flex! Keep the movement controlled."
+    }
+  ]
+}'::jsonb 
+    WHERE exercise_id IN (SELECT id FROM exercises WHERE name = 'Sit-up');
+
+    IF NOT EXISTS (SELECT 1 FROM exercises WHERE name = 'Sit-up') THEN
+        INSERT INTO exercises (name, description, gif_url) 
+        VALUES ('Sit-up', 'Lie on your back with knees bent, then lift your torso toward your knees while keeping your core engaged.', '') 
+        RETURNING id INTO ex_id;
+        
+        INSERT INTO exercise_rules (exercise_id, rules_json, is_active) 
+        VALUES (ex_id, '{
+  "mode": "reps",
+  "description": "Lie on your back with knees bent, then lift your torso toward your knees while keeping your core engaged.",
+  "repConfig": {
+    "primaryJoints": [
+      12,
+      24,
+      26
+    ],
+    "startThreshold": 150,
+    "midThreshold": 45,
+    "type": "descending"
+  },
+  "rules": [
+    {
+      "id": "SU-01",
+      "name": "Torso Range",
+      "joints": [
+        12,
+        24,
+        26
+      ],
+      "minAngle": 40,
+      "maxAngle": 160,
+      "errorCondition": "angle < 40",
+      "message": "Don''t over-flex! Keep the movement controlled."
+    }
+  ]
+}'::jsonb, TRUE);
+    END IF;
+END $$;
+
+DO $$
+DECLARE
+    ex_id integer;
+BEGIN
+    UPDATE exercises 
+    SET description = 'From a plank position, alternate bringing your knees toward your chest as if running in place.', 
+        gif_url = '' 
+    WHERE name = 'Mountain Climber';
+    
+    UPDATE exercise_rules 
+    SET rules_json = '{
+  "mode": "reps",
+  "description": "From a plank position, alternate bringing your knees toward your chest as if running in place.",
+  "repConfig": {
+    "primaryJoints": [
+      24,
+      26,
+      28
+    ],
+    "startThreshold": 160,
+    "midThreshold": 80,
+    "type": "descending"
+  },
+  "rules": [
+    {
+      "id": "MC-01",
+      "name": "Knee Drive",
+      "joints": [
+        24,
+        26,
+        28
+      ],
+      "minAngle": 70,
+      "maxAngle": 100,
+      "message": "Bring your knee closer to your chest for a full rep!"
+    }
+  ]
+}'::jsonb 
+    WHERE exercise_id IN (SELECT id FROM exercises WHERE name = 'Mountain Climber');
+
+    IF NOT EXISTS (SELECT 1 FROM exercises WHERE name = 'Mountain Climber') THEN
+        INSERT INTO exercises (name, description, gif_url) 
+        VALUES ('Mountain Climber', 'From a plank position, alternate bringing your knees toward your chest as if running in place.', '') 
+        RETURNING id INTO ex_id;
+        
+        INSERT INTO exercise_rules (exercise_id, rules_json, is_active) 
+        VALUES (ex_id, '{
+  "mode": "reps",
+  "description": "From a plank position, alternate bringing your knees toward your chest as if running in place.",
+  "repConfig": {
+    "primaryJoints": [
+      24,
+      26,
+      28
+    ],
+    "startThreshold": 160,
+    "midThreshold": 80,
+    "type": "descending"
+  },
+  "rules": [
+    {
+      "id": "MC-01",
+      "name": "Knee Drive",
+      "joints": [
+        24,
+        26,
+        28
+      ],
+      "minAngle": 70,
+      "maxAngle": 100,
+      "message": "Bring your knee closer to your chest for a full rep!"
     }
   ]
 }'::jsonb, TRUE);

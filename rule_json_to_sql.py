@@ -21,6 +21,19 @@ DELETE FROM exercises WHERE id IN (1, 2, 3, 4, 5, 6);
 
 COMMIT;
 """
+
+"""
+-- MOUNTAIN CLIMBER ISIM FARKINDAN DOLAYI EN BASTA ESLESMIYOR. BUNU CALISTIRDIKTAN SONRA TEKRAR SQL SCRIPTINI CALISTIRIN.
+BEGIN;
+DELETE FROM exercises WHERE id = 19;
+UPDATE exercises SET name = 'Mountain Climber' WHERE id = 7;
+UPDATE exercises SET name = 'Sit-up' WHERE id = 8;
+INSERT INTO exercise_rules (exercise_id, rules_json)
+VALUES (7, '{}'::jsonb), (8, '{}'::jsonb)
+ON CONFLICT (exercise_id) DO NOTHING;
+COMMIT;
+"""
+
 import json
 import os
 
