@@ -1,91 +1,71 @@
-"""
--- ESKI EGZERSIZLER DBNIZDE VARSA BUNU SQL SCRIPTINDEN SONRA CALISTIRIN TEK SEFERLIK
-BEGIN;
-
-
-UPDATE workout_plan_items SET exercise_id = 9 WHERE exercise_id = 1;   -- Squat
-UPDATE workout_plan_items SET exercise_id = 10 WHERE exercise_id = 2;  -- Push-up
-UPDATE workout_plan_items SET exercise_id = 11 WHERE exercise_id = 3;  -- Plank
-UPDATE workout_plan_items SET exercise_id = 13 WHERE exercise_id = 4;  -- Lunge
-UPDATE workout_plan_items SET exercise_id = 16 WHERE exercise_id = 5;  -- Glute Bridge -> Glute-Bridge
-UPDATE workout_plan_items SET exercise_id = 14 WHERE exercise_id = 6;  -- Jumping Jack -> Jumping-Jack
-
-UPDATE session_exercises SET exercise_id = 9 WHERE exercise_id = 1;
-UPDATE session_exercises SET exercise_id = 10 WHERE exercise_id = 2;
-UPDATE session_exercises SET exercise_id = 11 WHERE exercise_id = 3;
-UPDATE session_exercises SET exercise_id = 13 WHERE exercise_id = 4;
-UPDATE session_exercises SET exercise_id = 16 WHERE exercise_id = 5;
-UPDATE session_exercises SET exercise_id = 14 WHERE exercise_id = 6;
-
-DELETE FROM exercises WHERE id IN (1, 2, 3, 4, 5, 6);
-
-COMMIT;
-"""
-
-"""
--- MOUNTAIN CLIMBER ISIM FARKINDAN DOLAYI EN BASTA ESLESMIYOR. BUNU CALISTIRDIKTAN SONRA TEKRAR SQL SCRIPTINI CALISTIRIN.
-BEGIN;
-DELETE FROM exercises WHERE id = 19;
-UPDATE exercises SET name = 'Mountain Climber' WHERE id = 7;
-UPDATE exercises SET name = 'Sit-up' WHERE id = 8;
-INSERT INTO exercise_rules (exercise_id, rules_json)
-VALUES (7, '{}'::jsonb), (8, '{}'::jsonb)
-ON CONFLICT (exercise_id) DO NOTHING;
-COMMIT;
-"""
-
 import json
-import os
 
-def escape_sql(text):
-    if text is None: return "NULL"
-    if not isinstance(text, str): return str(text)
-    return text.replace("'", "''")
+# change this path
+INPUT_FILE = "D:\\VSCode-Projects\\frontend-bbam\\src\\utils\\rules.json"
+OUTPUT_FILE = "insert_exercises.sql"
 
-def generate_sql(json_path, output_path="insert_exercises.sql"):
-    if not os.path.exists(json_path): return
 
-    with open(json_path, 'r', encoding='utf-8') as f: data = json.load(f)
-    sql_statements = ["BEGIN;\n"]
-    items_to_process = data.items() if isinstance(data, dict) else [(item.get('name', 'noname'), item) for item in data]
+def escape_sql_string(s):
+    return s.replace("'", "''")
 
-    for name_key, details in items_to_process:
-        name = escape_sql(name_key)
-        description = escape_sql(details.get('description', 'No description provided.'))
-        gif_url = escape_sql(details.get('gif_url', ''))
-        formatted_json = json.dumps(details, indent=2, ensure_ascii=False)
-        full_config_escaped = escape_sql(formatted_json)
 
-        stmt = f"""
-DO $$
-DECLARE
-    ex_id integer;
-BEGIN
-    UPDATE exercises 
-    SET description = '{description}', 
-        gif_url = '{gif_url}' 
-    WHERE name = '{name}';
-    
-    UPDATE exercise_rules 
-    SET rules_json = '{full_config_escaped}'::jsonb 
-    WHERE exercise_id IN (SELECT id FROM exercises WHERE name = '{name}');
+def format_json_for_sql(obj):
+    json_str = json.dumps(obj, indent=2)
+    return escape_sql_string(json_str)
 
-    IF NOT EXISTS (SELECT 1 FROM exercises WHERE name = '{name}') THEN
-        INSERT INTO exercises (name, description, gif_url) 
-        VALUES ('{name}', '{description}', '{gif_url}') 
-        RETURNING id INTO ex_id;
-        
-        INSERT INTO exercise_rules (exercise_id, rules_json, is_active) 
-        VALUES (ex_id, '{full_config_escaped}'::jsonb, TRUE);
-    END IF;
-END $$;
+
+def generate_sql(data):
+    sql_parts = []
+    sql_parts.append("BEGIN;\n")
+
+    for exercise_name, content in data.items():
+        description = content.get("description", "")
+        description_sql = escape_sql_string(description)
+
+        rules_json_sql = format_json_for_sql(content)
+
+        section_title = exercise_name.upper().replace("-", " ")
+
+        block = f"""
+-- =====================================
+-- {section_title}
+-- =====================================
+WITH upsert AS (
+    UPDATE exercises
+    SET description = '{description_sql}',
+        gif_url = ''
+    WHERE name = '{exercise_name}'
+    RETURNING id
+)
+INSERT INTO exercises (name, description, gif_url)
+SELECT '{exercise_name}', '{description_sql}', ''
+WHERE NOT EXISTS (SELECT 1 FROM upsert);
+
+INSERT INTO exercise_rules (exercise_id, rules_json, is_active)
+SELECT id, '{rules_json_sql}'::jsonb, TRUE
+FROM exercises WHERE name = '{exercise_name}'
+ON CONFLICT (exercise_id)
+DO UPDATE SET 
+    rules_json = EXCLUDED.rules_json,
+    is_active = TRUE;
 """
-        sql_statements.append(stmt)
+        sql_parts.append(block)
 
-    sql_statements.append("\nCOMMIT;")
+    sql_parts.append("\nCOMMIT;")
+    return "\n".join(sql_parts)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.writelines(sql_statements)
+
+def main():
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    sql_script = generate_sql(data)
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write(sql_script)
+
+    print(f"SQL script generated: {OUTPUT_FILE}")
+
 
 if __name__ == "__main__":
-    generate_sql("C:\\frontend-bbam\\src\\utils\\rules.json")
+    main()
