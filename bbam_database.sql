@@ -4,7 +4,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_staff BOOLEAN DEFAULT FALSE,
+    is_staff BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE user_profiles (
