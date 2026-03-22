@@ -22,9 +22,16 @@ class WorkoutPlanItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'exercise', 'exercise_id', 'step_order', 'target_reps', 'target_seconds', 'set_label']
 
 class WorkoutPlanSerializer(serializers.ModelSerializer):
-    items = WorkoutPlanItemSerializer(many=True, read_only=True, source='workoutplanitem_set')
+    items = WorkoutPlanItemSerializer(many=True, source='workoutplanitem_set')
     
     class Meta:
         model = WorkoutPlan
         fields = ['id', 'user', 'plan_name', 'items', 'created_at']
         read_only_fields = ['user']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('workoutplanitem_set', [])
+        workout_plan = WorkoutPlan.objects.create(**validated_data)
+        for item_data in items_data:
+            WorkoutPlanItem.objects.create(plan=workout_plan, **item_data)
+        return workout_plan

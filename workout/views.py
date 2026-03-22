@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
-from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlan
+from .models import Exercise, ExerciseRule, WorkoutPlan
 from .serializers import (
     ExerciseSerializer, ExerciseRuleSerializer, 
     WorkoutPlanSerializer
