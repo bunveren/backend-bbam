@@ -35,8 +35,8 @@ INSERT INTO exercises (name, description, gif_url) VALUES
 ('Push-up', 'Upper body strength; keep body in a straight line.', 'https://cdn.example.com/gifs/pushup.gif'),
 ('Plank', 'Core endurance; neutral spine, tight glutes.', 'https://cdn.example.com/gifs/plank.gif'),
 ('Lunge', 'Single-leg strength; avoid knee valgus.', 'https://cdn.example.com/gifs/lunge.gif'),
-('Glute Bridge', 'Posterior chain activation; squeeze glutes at top.', 'https://cdn.example.com/gifs/glute_bridge.gif'),
-('Jumping Jack', 'Cardio warm-up; controlled pace.', 'https://cdn.example.com/gifs/jumping_jack.gif'),
+('Glute-Bridge', 'Posterior chain activation; squeeze glutes at top.', 'https://cdn.example.com/gifs/glute_bridge.gif'),
+('Jumping-Jack', 'Cardio warm-up; controlled pace.', 'https://cdn.example.com/gifs/jumping_jack.gif'),
 ('Mountain Climber', 'Core + cardio; keep hips stable.', 'https://cdn.example.com/gifs/mountain_climber.gif'),
 ('Sit-up', 'Core; avoid pulling neck.', 'https://cdn.example.com/gifs/situp.gif');
 
