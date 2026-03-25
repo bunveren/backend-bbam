@@ -40,3 +40,8 @@ class WorkoutPlanViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+    
+    def perform_destroy(self, instance):
+        from django.utils import timezone
+        instance.deleted_at = timezone.now()
+        instance.save()
