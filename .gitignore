@@ -1,8 +1,8 @@
 /venv
+.venv
+env/
 **/__pycache__/
 *.pyc
-**/migrations/*.py
-!**/migrations/__init__.__pycache__
-core_project/settings.py
 .env
-proje_ozeti.txt
+db.sqlite3
+staticfiles/
