@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Exercise, ExerciseRule, WorkoutPlan, WorkoutPlanItem
+from django.utils import timezone
+from django.db import transaction
 
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,3 +37,25 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
         for item_data in items_data:
             WorkoutPlanItem.objects.create(plan=workout_plan, **item_data)
         return workout_plan
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+        if items_data is None:
+            items_data = validated_data.pop('workoutplanitem_set', None)
+        if items_data is not None:
+            with transaction.atomic():
+                new_plan_name = validated_data.get('plan_name', instance.plan_name)
+                new_plan = WorkoutPlan.objects.create(
+                    user=instance.user,
+                    plan_name=new_plan_name,
+                )
+                
+                for item_data in items_data: WorkoutPlanItem.objects.create(plan=new_plan, **item_data)
+                instance.deleted_at = timezone.now()
+                instance.save()
+                return new_plan
+        
+        else:
+            for attr, value in validated_data.items(): setattr(instance, attr, value)
+            instance.save()
+            return instance

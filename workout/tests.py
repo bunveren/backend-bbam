@@ -1,11 +1,11 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from model_bakery import baker
-#from django.contrib.auth import get_user_model; User = get_user_model()
 from users.models import AppUser
 from django.urls import reverse
 from workout.models import WorkoutPlan, WorkoutPlanItem
-
+from tracking.models import WorkoutSession
+from django.utils import timezone
 
 class WorkoutModuleTests(APITestCase):
     def setUp(self):
@@ -53,7 +53,7 @@ class WorkoutModuleTests(APITestCase):
         """Antrenman planı oluşturma POST /api/workout/plans/ """
         data = {
             "plan_name": "Sabah Rutini",
-            "items": [{"exercise": self.exercise.id, "sets": 3, "reps": 12}]
+            "items": [{"exercise_id": self.exercise.id, "step_order": 1, "target_reps": 12}]
         }
         response = self.client.post('/api/workout/plans/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -63,7 +63,6 @@ class WorkoutModuleTests(APITestCase):
         plan = WorkoutPlan.objects.create(user=self.user, plan_name="Silinecek Plan")
         response = self.client.delete(f'/api/workout/plans/{plan.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        #self.assertFalse(WorkoutPlan.objects.filter(id=plan.id).exists()) soft deletedeyiz
 
     def test_it_28_30_exercise_admin_operations(self):
         """[IT-28/30] Yeni egzersiz tanımlama ve kütüphaneden silme (Admin)"""
@@ -99,7 +98,84 @@ class WorkoutModuleTests(APITestCase):
     def test_it_31_32_33_workout_plan_management(self):
         """[IT-31/32/33] Plan listeleme, detay ve güncelleme"""
         plan = WorkoutPlan.objects.create(user=self.user, plan_name="Eski Plan")
-        self.assertEqual(self.client.get('/api/workout/plans/').status_code, status.HTTP_200_OK) #31
-        self.assertEqual(self.client.get(f'/api/workout/plans/{plan.id}/').status_code, status.HTTP_200_OK) #32
+        self.assertEqual(self.client.get('/api/workout/plans/').status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(f'/api/workout/plans/{plan.id}/').status_code, status.HTTP_200_OK)
         response = self.client.patch(f'/api/workout/plans/{plan.id}/', {"plan_name": "Yeni Plan"})
         self.assertEqual(response.status_code, status.HTTP_200_OK) #33
+
+class WorkoutPlanUpdateTests(APITestCase):
+    def setUp(self):
+        self.user = baker.make(AppUser)
+        self.client.force_authenticate(user=self.user)
+        self.plan = WorkoutPlan.objects.create(user=self.user, plan_name="first")
+        self.exercise1 = baker.make('workout.Exercise', name="Bench Press")
+        self.exercise2 = baker.make('workout.Exercise', name="Squat")
+        self.item1 = WorkoutPlanItem.objects.create(plan=self.plan, exercise=self.exercise1, step_order=1, target_reps=10)
+        self.item2 = WorkoutPlanItem.objects.create(plan=self.plan, exercise=self.exercise2, step_order=2, target_reps=8)
+        self.list_url = '/api/workout/plans/'
+        self.detail_url = f'/api/workout/plans/{self.plan.id}/'
+    
+    def test_update_plan_name_only(self):
+        data = {"plan_name": "updated just the name"}
+        response = self.client.patch(self.detail_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(WorkoutPlan.objects.count(), 1)
+        
+        self.plan.refresh_from_db()
+        self.assertEqual(self.plan.plan_name, "updated just the name")
+        self.assertIsNone(self.plan.deleted_at)
+    
+    def test_update_plan_items_creates_new_version(self):
+        self.exercise3 = baker.make('workout.Exercise', name="Deadlift")
+        
+        data = {
+            "plan_name": "bro we DONT have any deadlift actually",
+            "items": [
+                {"exercise_id": self.exercise1.id, "step_order": 1, "target_reps": 10},
+                {"exercise_id": self.exercise3.id, "step_order": 2, "target_reps": 5}
+            ]
+        }
+        
+        response = self.client.patch(self.detail_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(WorkoutPlan.objects.count(), 2)
+        
+        self.plan.refresh_from_db()
+        self.assertIsNotNone(self.plan.deleted_at)
+        new_plan_id = response.data['id']
+        self.assertNotEqual(new_plan_id, self.plan.id)
+        
+        new_plan = WorkoutPlan.objects.get(id=new_plan_id)
+        self.assertIsNone(new_plan.deleted_at)
+        self.assertEqual(new_plan.workoutplanitem_set.count(), 2)
+    
+    def test_soft_delete_on_destroy(self):
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.plan.refresh_from_db()
+        self.assertIsNotNone(self.plan.deleted_at)
+    
+    def test_list_shows_only_active_plans(self):
+        deleted_plan = WorkoutPlan.objects.create(user=self.user, plan_name="deleted")
+        deleted_plan.deleted_at = "2024-01-01T12:00:00Z"
+        deleted_plan.save()
+        
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.plan.id)
+    
+    def test_session_history_retains_soft_deleted_plan(self):
+        session = WorkoutSession.objects.create(
+            user=self.user, 
+            plan=self.plan,
+            session_date=timezone.now(),
+            started_at=timezone.now(),
+        )
+        self.plan.deleted_at = "2024-01-01T12:00:00Z"
+        self.plan.save()
+        session_url = '/api/tracking/sessions/'
+        response = self.client.get(session_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['plan'], self.plan.id)
