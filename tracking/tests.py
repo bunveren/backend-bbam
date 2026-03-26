@@ -36,15 +36,17 @@ class TrackingModuleTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @patch('tracking.views.PerformanceAnalyzer.generate_and_save_summary')
-    def test_end_session_with_ai_mock(self, mock_ai_summary):
-        mock_ai_summary.return_value = "Harika iş çıkardın, formun çok iyi!"
+    @patch('feedback.services.AIFeedbackEngine.generate_post_workout_analysis')
+    def test_end_session_with_ai_mock(self, mock_ai_engine):
+        """AI servisinin antrenman bitişinde doğru tetiklendiğini test eder"""
+        mock_ai_engine.return_value = "Great job on your workout! Watch your knee valgus."
+        
         url = f'/api/tracking/sessions/{self.session.id}/end/'
         data = {"duration_minutes": 30}
         response = self.client.post(url, data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(mock_ai_summary.called)
+        self.assertTrue(mock_ai_engine.called)
         self.assertEqual(response.data['status'], 'completed')
 
     def test_get_user_stats(self):
@@ -233,18 +235,26 @@ class TrackingModuleTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.delete(update_url).status_code, status.HTTP_204_NO_CONTENT)
  
-    def test_ut_98_data_anonymization(self):
+    @patch('feedback.services.AIFeedbackEngine.generate_post_workout_analysis')
+    def test_ut_98_data_anonymization(self, mock_ai_engine):
         """[UT-98] Veri anonimleştirme kontrolü (PII içermeyen depolama)"""
-        session = WorkoutSession.objects.create(user=self.user, session_date=timezone.now().date(), started_at=timezone.now())
-        summary_data = {"avg_accuracy": 90, "total_reps": 50}
+        mock_ai_engine.return_value = "Performance was solid."
+        session = WorkoutSession.objects.create(
+            user=self.user, 
+            session_date=timezone.now().date(), 
+            started_at=timezone.now()
+        )
         
-        url = '/api/feedback/'
-        response = self.client.post(url, {"session_id": session.id, "metrics": summary_data}, format='json')
+        url = f'/api/tracking/sessions/{session.id}/end/'
+        data = {"duration_minutes": 40, "exercises": []}
+        response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
+        summary_exists = SessionSummary.objects.filter(session=session).exists()
+        self.assertTrue(summary_exists, "Antrenman bitişinde özet oluşturulamadı.")
         summary = SessionSummary.objects.get(session=session)
-        self.assertNotIn("test@bbam.com", str(summary.summary_json))
-        self.assertIn("avg_accuracy", summary.summary_json['raw_metrics'])       
+        summary_text = str(summary.summary_json)
+        self.assertNotIn(self.user.email, summary_text)     
     
     def test_it_16_get_stats_summary(self):
         """[IT-16] İstatistik özetini çekme (Dashboard verisi)"""
