@@ -4,9 +4,18 @@ from django.utils import timezone
 from django.db import transaction
 
 class ExerciseSerializer(serializers.ModelSerializer):
+    rules_json = serializers.SerializerMethodField()
     class Meta:
         model = Exercise
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'gif_url', 'created_at', 'rules_json']
+    
+    def get_rules_json(self, obj):
+        try:
+            if hasattr(obj, 'exerciserule') and obj.exerciserule.is_active:
+                return obj.exerciserule.rules_json
+        except Exception:
+            return None
+        return None
 
 class ExerciseRuleSerializer(serializers.ModelSerializer):
     class Meta:

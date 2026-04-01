@@ -24,7 +24,7 @@ class WorkoutController(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 class ExerciseLibraryViewSet(viewsets.ModelViewSet):
-    queryset = Exercise.objects.all()
+    queryset = Exercise.objects.select_related('exerciserule').all()
     serializer_class = ExerciseSerializer
 
 class ExerciseRuleViewSet(viewsets.ModelViewSet):
