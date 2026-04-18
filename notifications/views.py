@@ -11,8 +11,11 @@ class ReminderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return WorkoutReminder.objects.filter(user=self.request.user)
-
+        user = self.request.user
+        if user.is_staff:
+            return WorkoutReminder.objects.all()
+        return WorkoutReminder.objects.filter(user=user)
+    
     def _trigger_sync(self, request):
         sender_device_uuid = request.headers.get('X-Device-UUID')
         if sender_device_uuid:
