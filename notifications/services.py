@@ -9,6 +9,7 @@ class NotificationService:
     def send_silent_sync_signal(user, sender_device_uuid):
         devices = UserDevice.objects.filter(user=user).exclude(device_uuid=sender_device_uuid)
         if not devices.exists():
+            print("no device")
             return
 
         tokens = [d.expo_token for d in devices]
