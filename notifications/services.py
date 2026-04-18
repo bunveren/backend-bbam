@@ -8,7 +8,6 @@ class NotificationService:
     @staticmethod
     def send_silent_sync_signal(user, sender_device_uuid):
         devices = UserDevice.objects.filter(user=user).exclude(device_uuid=sender_device_uuid)
-        
         if not devices.exists():
             return
 
@@ -30,6 +29,7 @@ class NotificationService:
             
             if response.status_code == 200:
                 logger.info(f"Sync signal was successfully send to {len(tokens)} devices.")
+                print(f"DEBUG: Sync tetiklendi! User")
             else:
                 logger.error(f"Expo API Error: {response.text}")
                 
