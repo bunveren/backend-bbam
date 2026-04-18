@@ -21,6 +21,7 @@ class ReminderViewSet(viewsets.ModelViewSet):
         if sender_device_uuid:
             NotificationService.send_silent_sync_signal(request.user, sender_device_uuid)
         else:
+            print("Error: sync function call failed")
 
     def perform_create(self, serializer):
         reminder = serializer.save(user=self.request.user)
