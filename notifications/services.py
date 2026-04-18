@@ -22,14 +22,14 @@ class NotificationService:
             "priority": "high",
             "contentAvailable": True
         }
-
+        print(f"DEBUG: Sync methodu call!")
         try:
             url = "https://exp.host/--/api/v2/push/send"
             response = requests.post(url, json=payload, timeout=10)
             
             if response.status_code == 200:
                 logger.info(f"Sync signal was successfully send to {len(tokens)} devices.")
-                print(f"DEBUG: Sync tetiklendi! User")
+                print(f"DEBUG: Sync tetiklendi!")
             else:
                 logger.error(f"Expo API Error: {response.text}")
                 
