@@ -1,4 +1,7 @@
 from rest_framework import viewsets, status, generics, permissions, views
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import AppUser, UserProfile, UserDevice
@@ -124,3 +127,39 @@ class DeviceViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
     #     return super().destroy(request, *args, **kwargs)
         return Response({"detail": "Remote logout by ID is disabled for now. Use /unregister/{uuid}/"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+class ManualTokenRefreshView(APIView):
+    permission_classes = [] 
+
+    def post(self, request):
+        refresh_token_string = request.data.get('refresh')
+        
+        if not refresh_token_string:
+            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(refresh_token_string)
+            user_id = token['user_id']
+            user = AppUser.objects.filter(id=user_id).first()
+            
+            if not user:
+                raise TokenError("User associated with this token no longer exists.")
+
+            new_tokens = TokenService.generate_jwt(user)
+            
+            return Response({
+                "access": new_tokens['access'],
+                "refresh": new_tokens['refresh']
+            }, status=status.HTTP_200_OK)
+
+        except (TokenError, InvalidToken) as e:
+            return Response({
+                "detail": str(e), 
+                "code": "token_not_valid"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        except Exception:
+            return Response({
+                "detail": "An unexpected error occurred during token refresh.",
+                "code": "server_error"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
