@@ -15,10 +15,13 @@ class CustomJWTAuthentication(JWTAuthentication):
         validated_token = self.get_validated_token(raw_token)
         try:
             user_id = validated_token['user_id']
-            user = AppUser.objects.get(id=user_id)
+            user = AppUser.objects.filter(id=user_id).first()
+            #user = AppUser.objects.get(id=user_id)
+            if user is None:
+                raise exceptions.AuthenticationFailed('User not found')
             return (user, validated_token)
-        except AppUser.DoesNotExist:
-            raise exceptions.AuthenticationFailed('User not found')
+        except Exception as e:
+            raise exceptions.AuthenticationFailed(str(e))
         # auth_header = request.headers.get('Authorization')
         # if not auth_header or not auth_header.startswith('Bearer '):
         #     return None
