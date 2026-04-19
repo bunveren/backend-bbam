@@ -148,6 +148,13 @@ class WorkoutSessionViewSet(viewsets.ModelViewSet):
             "server_session_id": session.id,
             "message": "Offline data successfully synchronized."
         }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['get'], url_path='exercises')
+    def get_session_exercises(self, request, pk=None):
+        session = self.get_object()
+        exercises = SessionExercise.objects.filter(session=session).order_by('step_order')
+        serializer = SessionExerciseSerializer(exercises, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SessionExerciseViewSet(viewsets.ModelViewSet):
     queryset = SessionExercise.objects.all()
