@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status, generics, permissions, views
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -50,6 +51,10 @@ class UserController(viewsets.ModelViewSet):
             })
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
     
+    @extend_schema(
+        request=TokenRefreshSerializer,
+        responses={200: TokenRefreshSerializer}
+    )
     @action(detail=False, methods=['post'], url_path='token/refresh', permission_classes=[])
     def refresh_token(self, request):
         serializer = TokenRefreshSerializer(data=request.data)
