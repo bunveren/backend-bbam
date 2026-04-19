@@ -34,3 +34,19 @@ class NotificationService:
                 
         except requests.exceptions.RequestException as e:
             logger.error(f"Connection Error: {str(e)}")
+
+    @staticmethod
+    def send_visible_push(tokens, title, message, plan_id=None):
+        payload = {
+            "to": tokens, # Cihazların adresleri (liste)
+            "title": title,
+            "body": message,
+            "sound": "default", 
+            "priority": "high", 
+            "data": {"plan_id": plan_id} 
+        }
+        try:
+            r = requests.post("https://exp.host/--/api/v2/push/send", json=payload, timeout=10)
+            print(f"Push Response: {r.text}") 
+        except Exception as e:
+            print(f"Push Error: {e}")

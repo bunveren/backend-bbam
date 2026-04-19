@@ -1,11 +1,55 @@
+import os
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.utils import timezone
+import pytz
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from .models import WorkoutReminder
 from .serializers import WorkoutReminderSerializer
 from .services import NotificationService
+from users.models import UserDevice
 
 # Create your views here.
+def trigger_reminders_view(request):
+    # expected_key = os.environ.get('CRON_SECRET_KEY')
+    # provided_key = request.headers.get('X-Cron-Key')
+    # if provided_key != expected_key:
+    #     return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    istanbul_tz = pytz.timezone('Europe/Istanbul')
+    now_istanbul = timezone.now().astimezone(istanbul_tz)
+    
+    h = now_istanbul.hour
+    m = now_istanbul.minute
+
+    reminders = WorkoutReminder.objects.filter(
+        reminder_time__hour=h,
+        reminder_time__minute=m,
+        is_active=True
+    )
+
+    count = 0
+    for r in reminders:
+        devices = UserDevice.objects.filter(user=r.user)
+        tokens = [d.expo_token for d in devices if d.expo_token]
+
+        if tokens:
+            NotificationService.send_visible_push(
+                tokens=tokens,
+                title="CRON JOB NOTIF",
+                message=r.message or "CRON JOB CALLS YOU FOR WORKOUT.",
+                plan_id=r.plan.id if r.plan else None
+            )
+            count += 1
+
+    return JsonResponse({
+        "status": "completed",
+        "server_time_istanbul": f"{h}:{m}",
+        "reminders_found": reminders.count(),
+        "notifications_sent_to_users": count
+    })
+
 class ReminderViewSet(viewsets.ModelViewSet):
     serializer_class = WorkoutReminderSerializer
     permission_classes = [permissions.IsAuthenticated]
