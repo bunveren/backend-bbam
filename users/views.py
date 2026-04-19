@@ -5,7 +5,7 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import AppUser, UserProfile, UserDevice
-from .serializers import AppUserSerializer, UserProfileSerializer, UserDeviceSerializer
+from .serializers import AppUserSerializer, TokenRefreshSerializer, UserProfileSerializer, UserDeviceSerializer
 from .services import UserManager, TokenService
 class UserController(viewsets.ModelViewSet):
     queryset = AppUser.objects.all()
@@ -49,6 +49,33 @@ class UserController(viewsets.ModelViewSet):
                 "user_id": user.id
             })
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    @action(detail=False, methods=['post'], url_path='token/refresh', permission_classes=[])
+    def refresh_token(self, request):
+        serializer = TokenRefreshSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        refresh_token_string = serializer.validated_data.get('refresh')
+
+        try:
+            token = RefreshToken(refresh_token_string)
+            user_id = token['user_id']
+            
+            user = AppUser.objects.filter(id=user_id).first()
+            if not user:
+                raise TokenError("User associated with this token no longer exists.")
+
+            new_tokens = TokenService.generate_jwt(user)
+            
+            return Response({
+                "access": new_tokens['access'],
+                "refresh": new_tokens['refresh']
+            }, status=status.HTTP_200_OK)
+
+        except (TokenError, InvalidToken) as e:
+            return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception:
+            return Response({"detail": "Server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
@@ -127,39 +154,3 @@ class DeviceViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
     #     return super().destroy(request, *args, **kwargs)
         return Response({"detail": "Remote logout by ID is disabled for now. Use /unregister/{uuid}/"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
-class ManualTokenRefreshView(APIView):
-    permission_classes = [] 
-
-    def post(self, request):
-        refresh_token_string = request.data.get('refresh')
-        
-        if not refresh_token_string:
-            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            token = RefreshToken(refresh_token_string)
-            user_id = token['user_id']
-            user = AppUser.objects.filter(id=user_id).first()
-            
-            if not user:
-                raise TokenError("User associated with this token no longer exists.")
-
-            new_tokens = TokenService.generate_jwt(user)
-            
-            return Response({
-                "access": new_tokens['access'],
-                "refresh": new_tokens['refresh']
-            }, status=status.HTTP_200_OK)
-
-        except (TokenError, InvalidToken) as e:
-            return Response({
-                "detail": str(e), 
-                "code": "token_not_valid"
-            }, status=status.HTTP_401_UNAUTHORIZED)
-        
-        except Exception:
-            return Response({
-                "detail": "An unexpected error occurred during token refresh.",
-                "code": "server_error"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

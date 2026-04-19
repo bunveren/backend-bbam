@@ -17,3 +17,6 @@ class UserDeviceSerializer(serializers.ModelSerializer):
         model = UserDevice
         fields = ['id', 'device_uuid', 'expo_token', 'os_type', 'last_active']
         read_only_fields = ['id', 'last_active']
+
+class TokenRefreshSerializer(serializers.Serializer):
+    refresh = serializers.CharField(help_text="enter refresh token.")
