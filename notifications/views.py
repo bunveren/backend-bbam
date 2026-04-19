@@ -12,10 +12,10 @@ from users.models import UserDevice
 
 # Create your views here.
 def trigger_reminders_view(request):
-    # expected_key = os.environ.get('CRON_SECRET_KEY')
-    # provided_key = request.headers.get('X-Cron-Key')
-    # if provided_key != expected_key:
-    #     return JsonResponse({"error": "Unauthorized"}, status=401)
+    expected_key = os.environ.get('CRON_SECRET_KEY')
+    provided_key = request.headers.get('X-Cron-Key')
+    if provided_key != expected_key:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     istanbul_tz = pytz.timezone('Europe/Istanbul')
     now_istanbul = timezone.now().astimezone(istanbul_tz)
