@@ -37,8 +37,8 @@ def trigger_reminders_view(request):
         if tokens:
             NotificationService.send_visible_push(
                 tokens=tokens,
-                title="CRON JOB NOTIF",
-                message=r.message or "CRON JOB CALLS YOU FOR WORKOUT.",
+                title="Time for your workout session!",
+                message=r.message or "Do something your future self will thank you for. Let's get moving! ",
                 plan_id=r.plan.id if r.plan else None
             )
             count += 1
