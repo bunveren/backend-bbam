@@ -16,11 +16,9 @@ class CustomJWTAuthentication(JWTAuthentication):
         try:
             user_id = validated_token['user_id']
             user = AppUser.objects.get(id=user_id)
-            if user is None:
-                raise exceptions.AuthenticationFailed('User not found')
             return (user, validated_token)
-        except Exception as e:
-            raise exceptions.AuthenticationFailed(str(e))
+        except AppUser.DoesNotExist:
+            raise exceptions.AuthenticationFailed('USER NOT FOUND.')
         # auth_header = request.headers.get('Authorization')
         # if not auth_header or not auth_header.startswith('Bearer '):
         #     return None
