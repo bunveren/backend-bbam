@@ -28,8 +28,6 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-#ALLOWED_HOSTS = [] # Canlıda burayı Render'ın vereceği URL ile kısıtlayacağız
-# settings.py içindeki ilgili satırı bununla değiştir:
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
@@ -68,10 +66,10 @@ MIDDLEWARE = [
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        "https://bbam-app.com", # Uygulamanızın varsa web adresi
-    ]
+    CORS_ALLOW_ALL_ORIGINS = True
+    # CORS_ALLOWED_ORIGINS = [
+    #     "https://bbam-app.com", 
+    # ]
 
 ROOT_URLCONF = 'core_project.urls'
 
